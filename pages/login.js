@@ -25,7 +25,7 @@ function Login() {
                             )
                         }
                     >
-                        Login Using OTP
+                        Login Using OTP/Register
                     </Tab>
                     <Tab
                         className={({ selected }) =>
