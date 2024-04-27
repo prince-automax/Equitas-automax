@@ -1,0 +1,60 @@
+mutation addWorkBook($data: WorkSheetCreateInput!) {
+  createWorkSheet(data: $data) {
+    id
+    registrationNumber
+    model
+    make
+    engineNo
+    chassis
+    image1
+    image2
+  }
+}
+
+
+
+query userWorkBook {
+  workSheets {
+    id
+    chassis
+    engineNo
+    registrationNumber
+    varient
+    make
+    model
+    vehicleCondition
+    image1
+    image2
+    image3
+    image4
+    image5
+  }
+}
+
+query uniqueuserWorkSheet($where: WorkSheetWhereUniqueInput!) {
+  workSheet(where: $where) {
+    chassis
+    createdAt
+    engineNo
+    id
+    image1
+    image2
+    image3
+    image4
+    image5
+    make
+    model
+    registrationNumber
+    vehicleCondition
+    varient
+  }
+}
+
+mutation WorksheetUpdate(
+  $where: WorkSheetWhereUniqueInput!
+  $data: WorkSheetUpdateInput!
+) {
+  updateWorkSheet(where: $where, data: $data) {
+    id
+  }
+}

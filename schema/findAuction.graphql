@@ -1,0 +1,47 @@
+query Institutions {
+  institutions {
+    name
+    id
+  }
+}
+
+
+
+
+
+
+
+ query FindAuctions($where: FindAuctionWhereInput!, $take: Int, $skip: Int!, $orderBy: [FindAuctionOrderByInput!]!) {
+  findAuctions(where: $where, take: $take, skip: $skip, orderBy: $orderBy) {
+    address
+    auctionEndDate
+    auctionNotice
+    auctionStartDate
+    city
+    contactDetails
+    createdAt
+    emdAmount
+    emdSubmissionDate
+    id
+    institution_details {
+      createdAt
+      id
+      name
+    }
+    listingId
+    propertyType
+    reservePrice
+    vehicleRegNo
+    state {
+      name
+    }
+    image
+  }
+}
+
+query findAuctionState {
+  states {
+    id
+    name
+  }
+}
