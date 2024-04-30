@@ -33,27 +33,22 @@ import {
 import graphQLClient from "@utils/useGQLQuery";
 import moment from "moment";
 import Swal from "sweetalert2";
-
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-function Stocks() {
+function Vehicle() {
   const router = useRouter();
   const { id } = router.query;
-  const currentUrl = router.asPath;
-
   const [accessToken, setAccessToken] = useState("");
   const [userId, setUserId] = useState("");
-  const [interval, setAPIInterval] = useState(10000);
+  const [interval, setAPIInterval] = useState(1000);
   const [vehicle, setVehicle] = useState(null);
   const queryClient = useQueryClient();
   const [images, setImages] = useState([]);
   const [bidAmount, setBidAmount] = useState("");
   const [tick, setTick] = useState(0);
   const [serverTime, setserverTime] = useState(null);
-
-  
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -63,14 +58,6 @@ function Stocks() {
       setUserId(id);
     }
   }, []);
-
-  useEffect(()=>{
-    const currentUrl =window.location.href
-    console.log("currentURl",currentUrl);
-    localStorage.setItem('currentUrl', currentUrl);
-
-    
-  },[])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -193,12 +180,44 @@ function Stocks() {
     return true;
   }
 
+
+
+  useEffect(() => {
+    if (vehicle?.event?.bidLock === "locked") {
+      if (vehicle?.currentBidAmount) {
+        setBidAmount(vehicle?.currentBidAmount+(+vehicle?.quoteIncreament));
+      }
+      else if(vehicle?.startPrice){
+        setBidAmount(vehicle?.startPrice);
+      }
+      else if(!vehicle?.startPrice){
+        setBidAmount(vehicle?.quoteIncreament)
+      }
+  
+    } else {
+      if (vehicle?.currentBidAmount) {
+        let amt = vehicle?.userVehicleBids?.length
+          ? vehicle?.userVehicleBids[0]?.amount+(+vehicle?.quoteIncreament)
+          : vehicle?.startPrice;
+        setBidAmount(amt.toString());
+      }
+         else if(vehicle?.startPrice){
+        setBidAmount(vehicle?.startPrice);
+      }
+      else if(!vehicle?.startPrice){
+        setBidAmount(vehicle?.quoteIncreament)
+      }
+ 
+    }
+  }, [vehicle?.event?.bidLock,vehicle]);
+
+
   return (
     <DashboardTemplate>
       <div className="px-6 mb-8 md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
           <h2 className="text-xl font-semibold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Stocks
+            Vehicle
           </h2>
         </div>
         {/* <div className="mt-4 flex md:mt-0 md:ml-4">
@@ -368,50 +387,7 @@ function Stocks() {
             <div className="px-4 py-6">
               <h2 className="text-lg font-semibold text-white">Bid Details</h2>
 
-              <div className="space-y-2 mt-4">
-                <div className="flex items-center text-sm text-gray-200">
-                  <svg
-                    className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-200"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Start Date :{" "}
-                  {vehicle?.event?.startDate
-                    ? moment(vehicle?.event?.startDate).format(
-                        "MMMM Do, YYYY ddd h:mm a"
-                      )
-                    : "NA"}
-                </div>
-                <div className="flex items-center text-sm text-gray-200">
-                  <svg
-                    className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-200"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  End Date :{" "}
-                  {vehicle?.bidTimeExpire
-                    ? moment(vehicle?.bidTimeExpire).format(
-                        "MMMM Do, YYYY ddd h:mm a"
-                      )
-                    : "NA"}
-                </div>
-              </div>
+             
 
               <dl className="mt-6 space-y-4 ">
                 <div className="flex items-center justify-between">
@@ -420,7 +396,7 @@ function Stocks() {
                     {vehicle?.startPrice}
                   </dd>
                 </div>
-                {vehicle?.event.bidLock === "locked" ? (
+                {vehicle?.event?.bidLock === "locked" ? (
                   <div className="flex items-center justify-between">
                     <dt className="text-sm text-gray-200">Current Quote</dt>
                     <dd className="text-sm font-medium text-gray-200">
@@ -444,22 +420,7 @@ function Stocks() {
                   </dd>
                 </div>
 
-                <div className="border-t border-indigo-600 pt-4 flex items-center justify-between">
-                  <dt className="flex items-center text-sm text-gray-300">
-                    <span>Your bids left</span>
-                  </dt>
-                  <dd className="text-sm font-medium text-gray-200">
-                    {vehicle?.event?.noOfBids - vehicle?.userVehicleBidsCount}
-                  </dd>
-                </div>
-                <div className="border-t border-indigo-600 pt-4 flex items-center justify-between">
-                  <dt className="flex text-sm text-gray-200">
-                    <span>No. of bids</span>
-                  </dt>
-                  <dd className="text-sm font-medium text-gray-200">
-                    {vehicle?.totalBids}
-                  </dd>
-                </div>
+                
                 <div className="border-t border-indigo-600 pt-4 flex items-center justify-between">
                   <dt className="flex text-sm text-gray-200">
                     <span>Quote Increment</span>
@@ -469,17 +430,16 @@ function Stocks() {
                   </dd>
                 </div>
               </dl>
-              {IsCompleted() && (
+              
                 <input
                   className="mt-6 w-full border-white px-5 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-700 focus:ring-white rounded-md"
                   placeholder="Enter bid amount"
-                  value={bidAmount}
+                  value={bidAmount !== "0" ? bidAmount : vehicle?.startPrice}
                   onChange={(e) => {
                     setBidAmount(e.target.value.replace(/\D/g, ""));
                   }}
                 />
-              )}
-              {IsCompleted() && (
+            
                 <button
                   type="submit"
                   onClick={() => {
@@ -558,7 +518,7 @@ function Stocks() {
                 >
                   BID NOW
                 </button>
-              )}
+          
               <p className=" text-sm text-indigo-100">
                 {/* {vehicle?.userVehicleBidsCount && vehicle?.myBidRank ? (
                   vehicle?.myBidRank == 1 ? (
@@ -574,22 +534,27 @@ function Stocks() {
                     vehicle?.myBidRank == 1 ? (
                       <p className="text-green-500 font-bold text-base space-x-1">
                         <FontAwesomeIcon icon={faThumbsUp} />{" "}
-                        <span className="text-green-500"> Winning</span>
+                        <span className="text-green-500 uppercase"> Higest Bid</span>
                       </p>
                     ) : (
                       <p className="text-red-500 font-bold text-base space-x-1">
                         <FontAwesomeIcon icon={faThumbsDown} />{" "}
-                        <span style={{ color: "#FF3333" }}>Losing</span>
+                        <span style={{ color: "#FF3333" }} className="uppercase">Losing</span>
                       </p>
                     )
                   ) : (
                     <p className="text-black font-bold text-base space-x-1">
                       <FontAwesomeIcon icon={faUserSlash} />
-                      <span className="text-black"> Not Enrolled </span>
+                      <span className="text-black uppercase"> Not Enrolled </span>
                     </p>
                   )}
                 </div>
               </p>
+              <div className="mt-4 w-full    border-white text-center bg-white px-5 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-700 focus:ring-white rounded-md">
+
+                <p className="  text-black font-roboto font-semibold">BID  STATUS</p><p className="tracking-wide text-blue-500	uppercase">{vehicle?.bidStatus }</p>
+                </div>
+
             </div>
           </div>
         </section>
@@ -598,7 +563,7 @@ function Stocks() {
   );
 }
 
-export default withPrivateRoute(Stocks)
+export default withPrivateRoute(Vehicle);
 
 function GeneralDetailsTab(props) {
   return (

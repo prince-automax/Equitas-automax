@@ -5,10 +5,10 @@ const nextConfig = {
     swcMinify: true,
     trailingSlash: true,
     env: {
-        // BASE_URL: "https://api-dev.autobse.com",
-        // API_URL: "https://api-dev.autobse.com/api/graphql",
-        BASE_URL: "https://api.autobse.com",
-        API_URL: "https://api.autobse.com/api/graphql",
+        BASE_URL: "https://api-dev.autobse.com",
+        API_URL: "https://api-dev.autobse.com/api/graphql",
+        // BASE_URL: "https://api.autobse.com",
+        // API_URL: "https://api.autobse.com/api/graphql",
      },
     images: {
         domains: [
@@ -17,7 +17,9 @@ const nextConfig = {
             "photos.google.com",
             "firebasestorage.googleapis.com",
             "api-dev.autobse.com",
-            "ops.adroitauto.in"
+            "ops.adroitauto.in",
+            "autobseimagesandexcel-dev.s3.ap-south-1.amazonaws.com",
+            "api-dev.autobse.comhttps"
         ],
     },
 };
