@@ -6,7 +6,7 @@ import { GraphQLClient } from "graphql-request";
 // import { RequestDocument } from "graphql-request/dist/types";
 
 const endpoint =
-    process.env.API_URL || "https://api.autobse.com/api/graphql";
+    process.env.API_URL || "http://13.233.33.61/api/graphql";
 
 const graphQLClient = (headers?: HeadersInit) =>
     new GraphQLClient(endpoint, { credentials: "include", headers });

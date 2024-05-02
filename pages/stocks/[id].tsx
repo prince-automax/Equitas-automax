@@ -534,7 +534,7 @@ function Vehicle() {
                     vehicle?.myBidRank == 1 ? (
                       <p className="text-green-500 font-bold text-base space-x-1">
                         <FontAwesomeIcon icon={faThumbsUp} />{" "}
-                        <span className="text-green-500 uppercase"> Higest Bid</span>
+                        <span className="text-green-500 uppercase"> Highest Bid</span>
                       </p>
                     ) : (
                       <p className="text-red-500 font-bold text-base space-x-1">
