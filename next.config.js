@@ -5,8 +5,8 @@ const nextConfig = {
     swcMinify: true,
     trailingSlash: true,
     env: {
-        BASE_URL: "http://13.233.33.61",
-        API_URL:"http://13.233.33.61/api/graphql",
+        BASE_URL: "https://autobse.in",
+        API_URL:"https://autobse.in/api/graphql",
         
      },
     images: {
