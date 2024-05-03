@@ -59,6 +59,14 @@ function Vehicle() {
     }
   }, []);
 
+  useEffect(()=>{
+    const currentUrl =window.location.href
+    console.log("currentURl",currentUrl);
+    localStorage.setItem('currentUrl', currentUrl);
+
+    
+  },[])
+
   useEffect(() => {
     const timer = setInterval(() => {
       setTick((tic) => tic + 1);
