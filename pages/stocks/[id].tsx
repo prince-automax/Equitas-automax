@@ -1,878 +1,1323 @@
-import DashboardTemplate from "../../components/templates/DashboardTemplate";
-import withPrivateRoute from "../../utils/withPrivateRoute";
-import Image from "next/image";
-import { Splide, SplideSlide } from "@splidejs/react-splide";
-import "@splidejs/splide/dist/css/themes/splide-default.min.css";
 import {
-  faThumbsUp,
-  faThumbsDown,
-  faUserSlash,
-} from "@fortawesome/free-solid-svg-icons";
-
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
-import PostThumb1 from "@assets/blog/C1.jpg";
-import PostThumb2 from "@assets/blog/C2.jpg";
-import PostThumb3 from "@assets/blog/C3.jpg";
-import { useRouter } from "next/router";
-import { Tab } from "@headlessui/react";
-import { MinusIcon, PlusIcon } from "@heroicons/react/outline";
-import { useState, useEffect } from "react";
-import { useQueryClient } from "react-query";
-import {
-  CreateBidMutationVariables,
-  GetEventQuery,
-  OrderDirection,
-  useCreateBidMutation,
-  useGetEventQuery,
-  useVehiclesQuery,
-  VehiclesQuery,
-  QueryQueryVariables,
-  useQueryQuery,
-} from "@utils/graphql";
-import graphQLClient from "@utils/useGQLQuery";
-import moment from "moment";
-import Swal from "sweetalert2";
-function classNames(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
-
-function Vehicle() {
-  const router = useRouter();
-  const { id } = router.query;
-  const [accessToken, setAccessToken] = useState("");
-  const [userId, setUserId] = useState("");
-  const [interval, setAPIInterval] = useState(1000);
-  const [vehicle, setVehicle] = useState(null);
-  const queryClient = useQueryClient();
-  const [images, setImages] = useState([]);
-  const [bidAmount, setBidAmount] = useState("");
-  const [tick, setTick] = useState(0);
-  const [serverTime, setserverTime] = useState(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      const id = localStorage.getItem("id");
-      setAccessToken(token);
-      setUserId(id);
-    }
-  }, []);
-
-  useEffect(()=>{
-    const currentUrl =window.location.href
-    console.log("currentURl",currentUrl);
-    localStorage.setItem('currentUrl', currentUrl);
-
-    
-  },[])
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTick((tic) => tic + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const { data: timeData } = useQueryQuery<QueryQueryVariables>(
-    graphQLClient(),
-    {},
-    { refetchInterval: 60000 }
-  );
-
-  useEffect(() => {
-    if (timeData && timeData.time) {
-      setTick(0);
-      setserverTime(timeData.time);
-    }
-  }, [timeData]);
-
-  const callCreateBid = useCreateBidMutation<CreateBidMutationVariables>(
-    graphQLClient({ Authorization: `Bearer ${accessToken}` })
-  );
-
-  const { data, isLoading } = useVehiclesQuery<VehiclesQuery>(
-    graphQLClient({ Authorization: `Bearer ${accessToken}` }),
-    {
-      where: {
-        id: {
-          equals: id as string,
-        },
-      },
-      take: 1,
-      skip: 0,
-      userVehicleBidsOrderBy2: [{ amount: OrderDirection.Desc }],
-    },
-    {
-      cacheTime: 5,
-      refetchInterval: interval,
-      enabled: accessToken !== "" && id !== "",
-    }
-  );
-
-  const options = {
-    rewind: true,
-    gap: 1, // Adjust gap as needed
-    autoplay: true,
-    interval: 2000, // Set autoplay interval in milliseconds
-    pauseOnHover: false,
-    resetProgress: false,
-    pagination: false,
-  };
-
-  let [tabs] = useState({
-    "General ": [],
-    Registration: [],
-    Insurance: [],
-    "Other ": [],
-  });
-
-  useEffect(() => {
-    setVehicle(
-      data && data.vehicles && data.vehicles[0] ? data.vehicles[0] : null
+    ClipboardListIcon,
+    DocumentReportIcon,
+    PlusIcon,
+    MinusIcon,
+  } from "@heroicons/react/outline";
+  import {
+    CreateBidMutationVariables,
+    GetEventQuery,
+    LiveWatchListItemQueryVariables,
+    OrderDirection,
+    QueryQueryVariables,
+    useAddToWatchListMutation,
+    useCreateBidMutation,
+    useGetEventQuery,
+    useLiveWatchListItemQuery,
+    useQueryQuery,
+    useUserWorkBookQuery,
+    UserWorkBookQueryVariables,
+    useFindAuctionsQuery,
+    useGetStocksQuery,
+    GetStocksQueryVariables
+  } from "@utils/graphql";
+  import graphQLClient from "@utils/useGQLQuery";
+  import moment from "moment";
+  import Image from "next/image";
+  import Link from "next/link";
+  import { useRouter } from "next/router";
+  import { useEffect, useState } from "react";
+  import DashboardTemplate from "../../components/templates/DashboardTemplate";
+  import Loader from "../../components/ui/Loader";
+  import withPrivateRoute from "../../utils/withPrivateRoute";
+  import { useQueryClient } from "react-query";
+  import { SecondsToDhms } from "@utils/common";
+  import TermsConditions from "@components/templates/TermsConditions";
+  import InspectionReportModal from "@components/modals/InspectionReportModal";
+  import ImageCarouselModal from "@components/modals/ImageCarouselModal";
+  import Swal from "sweetalert2";
+  
+  import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+  // import TermsAndCondtionsModal from  "@components/modals/TermsAndConditionModal"
+  import {
+    faThumbsUp,
+    faThumbsDown,
+    faUserSlash,
+    faCircleInfo,
+    faAngleRight,
+    faSquarePlus,
+    faSquareMinus
+  } from "@fortawesome/free-solid-svg-icons";
+  
+  function Stocks() {
+    const router = useRouter();
+    const { id, type } = router.query;
+    const [accessToken, setAccessToken] = useState("");
+    const [userId, setUserId] = useState("");
+    const [usrid, setUsrid] = useState("");
+    const [interval, setAPIInterval] = useState(2000);
+    const queryClient = useQueryClient();
+    const [tick, setTick] = useState(0);
+    const [serverTime, setserverTime] = useState(null);
+    const [showInspectionReportModal, setShowInspectionReportModal] =
+      useState(false);
+    const [showImageCarouselModal, setShowImageCarouselModal] = useState(false);
+    const [images, setImages] = useState([]);
+    const [showCode, setShowCode] = useState(false);
+    const [isNotInWatchlist, setIsNotInWatchlist] = useState(true);
+    const [wathclistVehicls, setWatchlistvehicls] = useState([]);
+    const [demo, setDemo] = useState([]);
+  
+    // useEffect(()=>{
+    //   TermsAndCondtionsModal()
+    // },[])
+  
+    const handleClick = () => {
+      setShowCode(!showCode);
+    };
+    useEffect(() => {
+      const timer = setInterval(() => {
+        setTick((tic) => tic + 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }, []);
+  
+    const { data: timeData } = useQueryQuery<QueryQueryVariables>(
+      graphQLClient(),
+      {},
+      { refetchInterval: 60000 }
     );
-  }, [data]);
-
-  useEffect(() => {
-    setImages(vehicle?.frontImage?.split(","));
-  }, [vehicle]);
-
-  async function CallBid(amount, vehicleId) {
-    const confirmed = await Swal.fire({
-      text: "Are you sure to bid for Rs. " + amount + "?",
-      title: "BID CONFIMATION",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, bid for it!",
-      customClass: {
-        popup: "animated bounceInDown",
-        container: "custom-swal-container",
+  
+    useEffect(() => {
+      if (timeData && timeData.time) {
+        setTick(0);
+        setserverTime(timeData.time);
+      }
+    }, [timeData]);
+  
+    useEffect(() => {
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("token");
+        const id = localStorage.getItem("id");
+  
+        setAccessToken(token);
+        setUserId(id);
+        setUsrid(id);
+      }
+    }, []);
+  
+    const { data, isLoading } = useGetEventQuery<GetEventQuery>(
+      graphQLClient({ Authorization: `Bearer ${accessToken}` }),
+      {
+        where: { id: id as string },
+        orderBy: [
+          {
+            bidTimeExpire: OrderDirection.Asc,
+          },
+        ],
+        take: 1,
+        skip: 0,
+        userVehicleBidsOrderBy2: [{ amount: OrderDirection.Desc }],
       },
-    });
-
-    if (confirmed.isConfirmed) {
+      { cacheTime: 5, refetchInterval: interval, enabled: accessToken !== "" }
+    );
+  
+    const {
+      data: workbook,
+      isLoading: workbookLoading,
+      refetch,
+    } = useUserWorkBookQuery<UserWorkBookQueryVariables>(
+      graphQLClient({ Authorization: `Bearer ${accessToken}` })
+    );
+  
+    useEffect(() => {
+      refetch();
+    }, [workbook]);
+  
+    const callCreateBid = useCreateBidMutation<CreateBidMutationVariables>(
+      graphQLClient({ Authorization: `Bearer ${accessToken}` })
+    );
+  
+    function SecondsLeft(item) {
       try {
-        const cc = await callCreateBid.mutateAsync({
-          data: {
-            amount: parseInt(amount),
-            bidVehicle: {
-              connect: {
-                id: vehicleId,
+        if (item) {
+          const expiryTime = moment(item.bidTimeExpire);
+          const currentTime = moment(serverTime).add(tick, "seconds");
+          const diff = expiryTime.diff(currentTime, "seconds");
+          if (diff > 0) {
+            return (
+              <div className="w-full max-sm:flex items-center justify-between">
+                <div className="text-sm text-[#646464] font-roboto">End's In</div>
+                <div className="text-base text-red-500 font-medium font-roboto">
+                  {SecondsToDhms(diff)}
+                </div>
+              </div>
+            );
+          } else {
+            return (
+              <div className="w-full">
+                <div className="text-base text-red-500">Completed</div>
+              </div>
+            );
+          }
+        }
+      } catch {}
+      return (
+        <div className="w-full">
+          <div className="text-xs">End's in</div>
+          <div className="text-base text-red-500">NA</div>
+        </div>
+      );
+    }
+  
+    function IsCompleted(item) {
+      try {
+        if (item) {
+          const expiryTime = moment(item.bidTimeExpire);
+          const currentTime = moment(serverTime).add(tick, "seconds");
+          const diff = expiryTime.diff(currentTime, "seconds");
+  
+          if (diff > 0) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+      } catch {}
+      return true;
+    }
+  
+    async function CallBid(amount, vehicleId) {
+      const confirmed = await Swal.fire({
+        text: "Are you sure to bid for Rs. " + amount + "?",
+        title: "BID CONFIMATION",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, bid for it!",
+        customClass: {
+          popup: "animated bounceInDown",
+          container: "custom-swal-container",
+        },
+      });
+  
+      if (confirmed.isConfirmed) {
+        try {
+          const cc = await callCreateBid.mutateAsync({
+            data: {
+              amount: parseInt(amount),
+              bidVehicle: {
+                connect: {
+                  id: vehicleId,
+                },
               },
             },
-          },
-        });
-        // console.log("cc: ", cc);
-        Swal.fire("Success!", "Your bid has been submitted.", "success");
-      } catch (e) {
-        // console.log("EEE: ", e);
+          });
+          // console.log("cc: ", cc);
+          Swal.fire("Success!", "Your bid has been submitted.", "success");
+        } catch (e) {
+          // console.log("EEE: ", e);
+        }
       }
     }
-  }
-  function IsCompleted() {
-    try {
-      let bidTime = data.vehicles[0].bidTimeExpire;
-
-      const expiryTime = moment(bidTime);
-      const currentTime = moment(serverTime).add(tick, "seconds");
-      const diff = expiryTime.diff(currentTime, "seconds");
-
-      if (diff > 0) {
-        return true;
-      } else {
-        return false;
-      }
-    } catch {}
-    return true;
-  }
-
-
-
-  useEffect(() => {
-    if (vehicle?.event?.bidLock === "locked") {
-      if (vehicle?.currentBidAmount) {
-        setBidAmount(vehicle?.currentBidAmount+(+vehicle?.quoteIncreament));
-      }
-      else if(vehicle?.startPrice){
-        setBidAmount(vehicle?.startPrice);
-      }
-      else if(!vehicle?.startPrice){
-        setBidAmount(vehicle?.quoteIncreament)
-      }
   
-    } else {
-      if (vehicle?.currentBidAmount) {
-        let amt = vehicle?.userVehicleBids?.length
-          ? vehicle?.userVehicleBids[0]?.amount+(+vehicle?.quoteIncreament)
-          : vehicle?.startPrice;
-        setBidAmount(amt.toString());
+    const watchListMutation = useAddToWatchListMutation(
+      graphQLClient({ Authorization: `Bearer ${accessToken}` }),
+      {
+        onSuccess() {
+          queryClient.invalidateQueries("getEvent");
+        },
       }
-         else if(vehicle?.startPrice){
-        setBidAmount(vehicle?.startPrice);
-      }
-      else if(!vehicle?.startPrice){
-        setBidAmount(vehicle?.quoteIncreament)
-      }
- 
-    }
-  }, [vehicle?.event?.bidLock,vehicle]);
-
-
-  return (
-    <DashboardTemplate>
-      <div className="px-6 mb-8 md:flex md:items-center md:justify-between">
-        <div className="flex-1 min-w-0">
-          <h2 className="text-xl font-semibold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Vehicle
-          </h2>
-        </div>
-        {/* <div className="mt-4 flex md:mt-0 md:ml-4">
-          <button
-            type="button"
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            <MinusIcon className="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
-            Remove from watchlist
-          </button>
-          <button
-            type="button"
-            className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            <PlusIcon className="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
-            Add to watchlist
-          </button>
-        </div> */}
-      </div>
-      <div className="mt-2 max-w-3xl mx-auto grid grid-cols-1 gap-6 sm:px-6 lg:max-w-7xl lg:grid-flow-col-dense lg:grid-cols-3">
-        <div className="space-y-6 lg:col-start-1 lg:col-span-2 w-full">
-          {/* deskop view for the image vstarts here */}
-          <section className="hidden sm:block w-full">
-            <Tab.Group
-              as="div"
-              className="flex flex-col max-w-2xl justify-between"
-            >
-              <div className="w-full    max-w-3xl mx-auto sm:block">
-                <Tab.Panels className="w-full aspect-w-1 aspect-h-1">
-                  {images?.map((image, index) => (
-                    <Tab.Panel key={image.id}>
-                      <Image
-                        alt={`image${index}`}
-                        src={image.trim()}
-                        className="w-full h-full sm:rounded-lg "  
-                        width={500}
-                        height={300}
-                        objectFit="cover"
-                      />
-                    </Tab.Panel>
-                  ))}
-                </Tab.Panels>
-              </div>
-
-              <div className=" mt-6 w-full max-w-2xl mx-auto sm:block lg:max-w-none">
-                <Tab.List className="grid grid-cols-4 gap-6">
-                  {images?.map((image, index) => (
-                    <Tab
-                      key={index}
-                      className="relative h-24 bg-white rounded-md flex items-center justify-center text-sm font-medium uppercase text-gray-900 cursor-pointer hover:bg-gray-50 focus:outline-none focus:ring focus:ring-offset-4 focus:ring-opacity-50"
-                    >
-                      {({ selected }) => (
-                        <>
-                          {/* <span className="sr-only">{image.name}</span> */}
-                          <span className="absolute inset-0 rounded-md overflow-hidden">
-                            <Image
-                              alt={image}
-                              src={image.trim()}
-                              className="w-full h-full object-center object-cover"
-                              layout="fill"
-                            />
-                          </span>
-                          <span
-                            className={classNames(
-                              selected ? "ring-indigo-500" : "ring-transparent",
-                              "absolute inset-0 rounded-md ring-2 ring-offset-2 pointer-events-none"
-                            )}
-                            aria-hidden="true"
-                          />
-                        </>
-                      )}
-                    </Tab>
-                  ))}
-                </Tab.List>
-              </div>
-            </Tab.Group>
-          </section>
-
-          {/* deskop view for the image ends here */}
-
-          {/* mobile view of image starts here*/}
-          {vehicle?.frontImage ? (
-            <section className="sm:hidden border-2 ">
-              <div className=" h-fit border-2 rounded-lg  ">
-                <Splide options={options} aria-label="React Splide Example">
-                  {images?.map((image, index) => (
-                    <SplideSlide key={index}>
-                      <Image
-                        alt={`image${index}`}
-                        src={image.trim()}
-                        className="w-full h-full object-center object-cover rounded-lg "
-                        width={500}
-                        height={300}
-                      />
-                    </SplideSlide>
-                  ))}
-                </Splide>
-              </div>
-            </section>
-          ) : (
-            <div className=" text-center sm:hidden  ">
-              <p className="font-poppins font-semibold animate-pulse ">
-                No images for this vehicle
-              </p>
-            </div>
-          )}
-          {/* mobile view of image ends here*/}
-
-          <section>
-            <div>
-              <div className="mb-4 text-xl font-semibold text-gray-900">
-                Specifications
-              </div>
-              <div className="w-full  mt-4">
-                <Tab.Group>
-                  <Tab.List className="flex justify-between space-x-1 rounded-xl">
-                    {/* <div className="flex bg-amber-500"> */}
-                    {Object.keys(tabs).map((tab) => (
-                      <Tab
-                        key={tab}
-                        className={({ selected }) =>
-                          classNames(
-                            "w-full px-1 rounded-lg py-2.5 text-sm font-medium leading-5 bg-gray-200",
-                            "ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none",
-                            selected
-                              ? "bg-blue-900 text-black shadow"
-                              : "text-[#787777] hover:text-gray-900"
-                          )
-                        }
+    );
+  
+    const addToWatchList = async (vehicleId: string) => {
+      await watchListMutation.mutateAsync({
+        data: {
+          data: {
+            watchList: {
+              connect: [
+                {
+                  id: vehicleId,
+                },
+              ],
+            },
+          },
+          where: {
+            id: userId,
+          },
+        },
+      });
+    };
+  
+    const removeFromWatchList = async (vehicleId: string) => {
+      await watchListMutation.mutateAsync({
+        data: {
+          data: {
+            watchList: {
+              disconnect: [
+                {
+                  id: vehicleId,
+                },
+              ],
+            },
+          },
+          where: {
+            id: userId,
+          },
+        },
+      });
+    };
+  
+    let filteredArray = data?.event?.vehicles?.map((item, index) => {
+      return item?.watchedBy?.filter(
+        (watchlistUser) => watchlistUser?.id === userId
+      );
+    });
+  
+    return (
+      <DashboardTemplate
+        heading={
+          "Event ID#" +
+          data?.event?.eventNo +
+          " " +
+          data?.event?.seller?.name +
+          ",  " +
+          data?.event?.location?.name
+        }
+        subHeading={"List of all vehicles in this event"}
+      >
+        {data && data.event && data.event.termsAndConditions ? (
+          <TermsConditions data={data.event.termsAndConditions} />
+        ) : null}
+        {isLoading ? (
+          <Loader />
+        ) : (
+          <div className="space-y-6 mt-8 ">
+            {!data?.event?.vehicles?.length && <div>No Vehicles Found</div>}
+            {data?.event?.vehicles?.map((item, index) => {
+              const expiryTime = moment(item.bidTimeExpire);
+              const currentTime = moment(serverTime).add(tick, "seconds");
+              const diff = expiryTime.diff(currentTime, "seconds");
+              if ((diff > 0 && type == "l") || type == "c") {
+                {
+                  const find = (
+                    workbook?.workSheets as any[] | undefined
+                  )?.filter(
+                    (wb) => wb.registrationNumber === item.registrationNumber
+                  );
+  
+                  return (
+                    <>
+                      {/*MOBILE DESIGN*/}
+                      <div
+                        key={`d${index}`}
+                        className={`sm:hidden sm:max-md:flex-col font-sans border  rounded  mt-4 ${
+                          moment(item?.bidTimeExpire).diff(moment(), "s") <=
+                            120 &&
+                          moment(item?.bidTimeExpire).diff(moment(), "s") > 0
+                            ? "blink"
+                            : ""
+                        } ${
+                          index % 2 == 0
+                            ? "border-[#A7C2FF80] bg-[#EEF1FB] "
+                            : "border-[#A7C2FF80] bg-[#EEF1FB]"
+                        }  `}
                       >
-                        {tab}
-                      </Tab>
-                    ))}
-                    {/* </div> */}
-                  </Tab.List>
-
-                  <Tab.Panels className="mt-4">
-                    <Tab.Panel
-                      className={"rounded-xl bg-white focus:outline-none"}
-                    >
-                      <GeneralDetailsTab vehicle={vehicle} />
-                    </Tab.Panel>
-                    <Tab.Panel
-                      className={"rounded-xl bg-white  focus:outline-none"}
-                    >
-                      <RegistrationDetailsTab vehicle={vehicle} />
-                    </Tab.Panel>
-                    <Tab.Panel
-                      className={"rounded-xl bg-white  focus:outline-none"}
-                    >
-                      <InsuranceDetailsTab vehicle={vehicle} />
-                    </Tab.Panel>
-                    <Tab.Panel
-                      className={"rounded-xl bg-white  focus:outline-none"}
-                    >
-                      <OtherDetailsTab vehicle={vehicle} />
-                    </Tab.Panel>
-                  </Tab.Panels>
-                </Tab.Group>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <section className="lg:col-start-3 lg:col-span-1 ">
-          <div className="bg-indigo-700 rounded-lg shadow mb-6">
-            <div className="px-4 py-6">
-              <h2 className="text-lg font-semibold text-white">Bid Details</h2>
-
-             
-
-              <dl className="mt-6 space-y-4 ">
-                <div className="flex items-center justify-between">
-                  <dt className="text-sm text-gray-200">Start Price</dt>
-                  <dd className="text-sm font-medium text-gray-200">
-                    {vehicle?.startPrice}
-                  </dd>
-                </div>
-                {vehicle?.event?.bidLock === "locked" ? (
-                  <div className="flex items-center justify-between">
-                    <dt className="text-sm text-gray-200">Current Quote</dt>
-                    <dd className="text-sm font-medium text-gray-200">
-                      {vehicle?.currentBidAmount ?? "N/A"}
-                    </dd>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <dt className="text-sm text-gray-200">Latest Quote</dt>
-                    <dd className="text-sm font-medium text-gray-200">
-                      {vehicle?.userVehicleBids?.length
-                        ? vehicle?.userVehicleBids[0].amount
-                        : "N/A"}
-                    </dd>
-                  </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <dt className="text-sm text-gray-200">Rank</dt>
-                  <dd className="text-sm font-medium text-gray-200">
-                    {vehicle?.myBidRank}
-                  </dd>
-                </div>
-
-                
-                <div className="border-t border-indigo-600 pt-4 flex items-center justify-between">
-                  <dt className="flex text-sm text-gray-200">
-                    <span>Quote Increment</span>
-                  </dt>
-                  <dd className="text-sm font-medium text-gray-200">
-                    {vehicle?.quoteIncreament}
-                  </dd>
-                </div>
-              </dl>
-              
-                <input
-                  className="mt-6 w-full border-white px-5 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-700 focus:ring-white rounded-md"
-                  placeholder="Enter bid amount"
-                  value={bidAmount !== "0" ? bidAmount : vehicle?.startPrice}
-                  onChange={(e) => {
-                    setBidAmount(e.target.value.replace(/\D/g, ""));
-                  }}
-                />
-            
-                <button
-                  type="submit"
-                  onClick={() => {
-                    if (parseInt(bidAmount) % 100 != 0) {
-                      Swal.fire({
-                        title: "Bid amount should be multiple of 100",
-                        confirmButtonText: "OK",
-                        position: "top",
-                      });
-                    } else if (
-                      vehicle?.event?.bidLock === "locked" &&
-                      vehicle?.currentBidAmount >= parseInt(bidAmount)
-                    ) {
-                      Swal.fire({
-                        title: "Bid amount should be greater than last bid",
-                        confirmButtonText: "OK",
-                        position: "top",
-                      });
-                    }
-                    //  else if (
-                    //   vehicle?.event?.bidLock != "locked" &&
-                    //   vehicle?.userVehicleBids?.length &&
-                    //   vehicle?.userVehicleBids[0].amount >= parseInt(bidAmount)
-                    // ) {
-                    //   Swal.fire({
-                    //     title: "Bid amount should be greater than last bid",
-                    //     confirmButtonText: "OK",
-                    //     position: "top",
-                    //   });
-                    // }
-                    else if (
-                      //vehicle?.event?.bidLock === "locked" &&
-
-                      parseInt(bidAmount) % vehicle?.quoteIncreament !==
-                      0
-                    ) {
-                      Swal.fire({
-                        title:
-                          "Bid amount should be greater than minimum quote increment.",
-                        confirmButtonText: "OK",
-                        position: "top",
-                      });
-                    }
-                    // else if(   vehicle?.event?.bidLock  != "locked" &&
-                    // vehicle?.userVehicleBids?.length &&
-                    // vehicle.quoteIncreament >
-                    //   parseInt(bidAmount) - vehicle?.userVehicleBids[0].amount){
-                    //     Swal.fire({
-                    //       title:
-                    //         "Bid amount should be greater than minimum quote increment.",
-                    //       confirmButtonText: "OK",
-                    //       position: "top",
-                    //     });
-
-                    // }
-                    else if (vehicle?.startPrice > parseInt(bidAmount)) {
-                      Swal.fire({
-                        title: "Bid amount should be greater than start price.",
-                        confirmButtonText: "OK",
-                        position: "top",
-                      });
-                    } else if (parseInt(bidAmount) > 2147483647) {
-                      Swal.fire({
-                        title: "Bid amount exceeded the limit.",
-                        confirmButtonText: "OK",
-                        position: "top",
-                      });
-                    } else {
-                      CallBid(bidAmount, vehicle?.id);
-                      setTimeout(() => {
-                        // setBidAmount("");
-                      }, 1000);
-                    }
-                  }}
-                  className="mt-3 w-full flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-500 hover:bg-indigo-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-700 focus:ring-white"
-                >
-                  BID NOW
-                </button>
-          
-              <p className=" text-sm text-indigo-100">
-                {/* {vehicle?.userVehicleBidsCount && vehicle?.myBidRank ? (
-                  vehicle?.myBidRank == 1 ? (
-                    <span style={{ color: "#00CC00" }}>Winning</span>
-                  ) : (
-                    <span style={{ color: "#FF3333" }}>Losing</span>
-                  )
-                ) : (
-                  <span style={{ color: "#CCCC00" }}>Not Enrolled</span>
-                )} */}
-                <div className="mt-4 w-full border-white text-center bg-white px-5 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-700 focus:ring-white rounded-md">
-                  {vehicle?.userVehicleBidsCount && vehicle?.myBidRank ? (
-                    vehicle?.myBidRank == 1 ? (
-                      <p className="text-green-500 font-bold text-base space-x-1">
-                        <FontAwesomeIcon icon={faThumbsUp} />{" "}
-                        <span className="text-green-500 uppercase"> Highest Bid</span>
-                      </p>
-                    ) : (
-                      <p className="text-red-500 font-bold text-base space-x-1">
-                        <FontAwesomeIcon icon={faThumbsDown} />{" "}
-                        <span style={{ color: "#FF3333" }} className="uppercase">Losing</span>
-                      </p>
-                    )
-                  ) : (
-                    <p className="text-black font-bold text-base space-x-1">
-                      <FontAwesomeIcon icon={faUserSlash} />
-                      <span className="text-black uppercase"> Not Enrolled </span>
-                    </p>
-                  )}
-                </div>
-              </p>
-              <div className="mt-4 w-full    border-white text-center bg-white px-5 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-700 focus:ring-white rounded-md">
-
-                <p className="  text-black font-roboto font-semibold">BID  STATUS</p><p className="tracking-wide text-blue-500	uppercase">{vehicle?.bidStatus }</p>
-                </div>
-
-            </div>
+  
+  
+  
+                        {/* workbook, title, image, vehic info, add to watch, more details , inspection report */}
+                        <div
+                          className="flex-auto p-3 space-y-5  "
+                        >
+                          {/* workbook matched button */}
+                          <div className="m-2">
+                            {find?.length > 0 && (
+                              <Link href={`/workbook/${find[0].id}`}>
+                                <a
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Click here to view the workbook"
+                                  className="bg-blue-700 p-2 cursor-pointer rounded-md text-white animate-pulse font-roboto font-medium"
+                                >
+                                  WorkBook matched
+                                </a>
+                              </Link>
+                            )}
+                          </div>
+                          {/* title of vehicle and seller name */}
+                          <div className="sm:flex flex-wrap">
+                            <div className="flex-auto">
+                              <h1 className="   text-base  font-roboto font-bold  text-blue-800 uppercase">
+                                {item?.yearOfManufacture} {item?.make} -
+                                {item.registrationNumber}
+                              </h1>
+                              <div className="text-sm font-medium text-black">
+                                {data?.event?.seller?.name}
+                              </div>
+                            </div>
+                          </div>
+                          {item?.frontImage && (
+                            <div
+                              className="flex-none w-70 h-56  sm:max-md:h-56 sm:max-md:w-full md:h-auto sm:w-60 relative p-6 hover:cursor-pointer"
+                              onClick={() => {
+                                // BindVehicleImage(item);
+                                setImages((item?.frontImage).split(","));
+  
+                                setShowImageCarouselModal(true);
+                              }}
+                            >
+                              <Image
+                                alt="img"
+                                src={item?.frontImage}
+                                layout="fill"
+                                className="absolute inset-0 w-full h-full object-cover rounded"
+                              />
+                            </div>
+                          )}
+                        </div>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+                        <div
+                          className="flex-auto    "
+                        >
+                          {/* vehicle information starts here */}
+  
+                          <div className=" mt-4 pb-3 border-b-2 border-zinc-200">
+                            <dl className="grid grid-cols-3 gap-x-2 gap-y-4 sm:gap-x-4 sm:gap-y-3  ">
+                              <div className=" flex flex-col items-center justify-between sm:block">
+                                <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                  Odometer
+                                </dt>
+                                <dd className="text-sm font-medium sm:font-normal text-gray-900">
+                                  {item?.kmReading ?? "N/A"} km
+                                </dd>
+                              </div>
+                              {/* <div className=" sm:col-span-1 flex items-center justify-between sm:block">
+                              <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                Ownership
+                              </dt>
+                              <dd className="text-sm font-medium sm:font-normal file: text-gray-900">
+                                {item?.ownership}
+                              </dd>
+                            </div> */}
+                              <div className=" flex flex-col items-center justify-between sm:block">
+                                <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                  RC Book
+                                </dt>
+                                <dd className="text-sm font-medium sm:font-normal text-gray-900">
+                                  {item?.rcStatus}
+                                </dd>
+                              </div>
+                              <div className=" flex flex-col items-center justify-between sm:block">
+                                <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                  Repo date
+                                </dt>
+                                <dd className="text-sm text-gray-900">
+                                  {item?.repoDt
+                                    ? new Date(item?.repoDt).toLocaleDateString()
+                                    : "N/A"}
+                                </dd>
+                              </div>
+                              <div className=" flex flex-col items-center justify-between sm:block">
+                                <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                  Total Bids
+                                </dt>
+                                <dd className="text-sm font-medium sm:font-normal text-gray-900">
+                                  {item?.totalBids}
+                                </dd>
+                              </div>
+                              <div className=" flex flex-col items-center justify-between sm:block">
+                                <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                  Bids Remaining
+                                </dt>
+                                <dd className="text-sm font-medium sm:font-normal text-gray-900">
+                                  {data?.event?.noOfBids -
+                                    item?.userVehicleBidsCount}
+                                </dd>
+                              </div>
+                              <div className=" flex flex-col items-center justify-between sm:block">
+                                <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                  Rank
+                                </dt>
+                                <dd className="text-base font-medium sm:font-normal text-gray-900">
+                                  {item?.myBidRank ? item.myBidRank : "N/A"}
+                                </dd>
+                              </div>
+  
+                              <div className=" col-span-3 sm:col-span-1 flex max-sm:flex-col items-center justify-between sm:block  ">
+                                {data.event.bidLock === "locked" ? (
+                                  <>
+                                    <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                      Current Quote
+                                    </dt>
+                                    <dd className="text-base font-medium sm:font-normal text-gray-900">
+                                      {item?.currentBidAmount ?? "N/A"}
+                                    </dd>
+                                  </>
+                                ) : (
+                                  <>
+                                    <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                      Your Latest Quote
+                                    </dt>
+                                    <dd className="text-base font-medium sm:font-normal text-gray-900">
+                                      {item?.userVehicleBids?.length
+                                        ? item?.userVehicleBids[0].amount
+                                        : "N/A"}
+                                    </dd>
+                                  </>
+                                )}
+                              </div>
+                            </dl>
+                          </div>
+                          {/* vehicle information ends here */}
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+                          {/* add to watchlist, more details, inspection report starts here  */}
+                          <div className="flex sm:hidden space-x-4  pr-1 text-sm font-medium border-t border-slate-200">
+                            <div className="flex-auto flex flex-col  justify-center items-center  space-x-4 space-y-6 ">
+                              <div className="mt-1 flex   space-x-2 space-y-4  justify-around w-full    ">
+                                <>
+                                
+                                </>
+                                <div className="flex flex-col space-y-6 w-64">
+                                  {/* INSPECTION REPORT STARTS HERE */}
+                                  <div
+                                    className=" flex items-center justify-between text-sm font-roboto font-medium text-blue-800 "
+                                    onClick={() =>
+                                      setShowInspectionReportModal(true)
+                                    }
+                                  >
+                                    <Link href={item.inspectionLink}>
+                                      <a
+                                        target="_blank"
+                                        className="flex items-center text-sm font-roboto font-medium text-[#2563EB]"
+                                      >
+                                        Inspection Report
+                                      </a>
+                                    </Link>
+  
+                                    <FontAwesomeIcon icon={faCircleInfo} />
+                                  </div>
+  
+                                  {/* INSPECTION REPORT ENDS HERE */}
+  
+                                  {/* MORE DETAILS STARTS HERE */}
+  
+                                  <div className=" flex items-center justify-between text-sm text-blue-800 ">
+                                    <Link href={`/vehicle/${item.id}`}>
+                                      <a
+                                        target="_blank"
+                                        className="flex items-center text-sm  text-[#2563EB]"
+                                      >
+                                        More Details
+                                      </a>
+                                    </Link>
+                                    <FontAwesomeIcon icon={faAngleRight} />
+                                  </div>
+                                  {/* MORE DETAILS ENDS  HERE */}
+                                </div>
+                              </div>
+                              {/* Add and Remove from watchlist starts here  */}
+                              <>
+                                {IsCompleted(item) && (
+                                  <div className="mt-4flex items-center text-sm text-gray-500 p-2">
+                                    {item?.watchedBy?.filter(
+                                      (watchlistUser) =>
+                                        watchlistUser?.id === userId
+                                    ).length > 0 ? (
+                                      <button
+                                        type="button"
+                                        className="inline-flex items-center px-14 py-4 border border-[#536DD9] shadow-sm text-sm font-roboto  leading-4 font-bold rounded-md text-[#536DD9]   "
+                                        onClick={() =>
+                                          removeFromWatchList(item.id)
+                                        }
+                                      >
+                                      
+                                        <FontAwesomeIcon 
+                                         className="-ml-0.5 mr-2 h-4 w-4"
+                                        icon={faSquareMinus} />
+                                        Remove from watchlist
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        className="inline-flex items-center px-14 py-4 border border-[#536DD9] shadow-sm text-sm font-roboto  leading-4 font-bold rounded-md text-[#536DD9]   "
+                                        onClick={() => addToWatchList(item.id)}
+                                      >
+                                      
+                                        <FontAwesomeIcon
+                                         className="-ml-0.5 mr-2 h-4 w-4"
+                                        icon={faSquarePlus} />
+                                        Add to watchlist
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </>
+                              {/* Add and Remove from watchlist ends here */}
+                            </div>
+                          </div>
+                          {/* add to watchlist, more details, inspection report  ends here */}
+  
+                          {/* bid box and bid timing starts here */}
+                         
+                              {/* bid timing showing starts here */}
+  
+                             
+  
+  
+  
+  
+                              {/* new code  starts here for bid timing*/}
+                              <div className="w-full flex flex-col px-4 space-y-3 mt-4 ">
+                                <p className="sm:max-md:text-base md:text-left">
+                                  {" "}
+                                  {SecondsLeft(item)}
+                                </p>
+  
+                                {/* <div className="w-full space-y-2 mt-4"> */}
+                                <div className="flex justify-between sm:flex-col md:items-start sm:justify-left text-sm  text-gray-700 ">
+                                  <p className="text-[#646464] text-sm font-roboto">Start Date</p>
+                                  <p className="font-semibold font-roboto ">
+                                    {data?.event?.startDate
+                                      ? moment(data?.event?.startDate).format(
+                                          "MMMM Do, YYYY ddd h:mm a"
+                                        )
+                                      : "NA"}
+                                  </p>
+                                </div>
+                                <div className="flex justify-between sm:flex-col md:items-start text-sm  text-gray-700">
+                                  <p className="text-[#646464] text-sm font-roboto">End Date</p>
+                                  <p className="items-start font-semibold font-roboto">
+                                    {item?.bidTimeExpire
+                                      ? moment(item?.bidTimeExpire).format(
+                                          "MMMM Do, YYYY ddd h:mm a"
+                                        )
+                                      : "NA"}
+                                  </p>
+                                </div>
+                                {/* </div> */}
+                              </div>
+                              {/* new code  ends here for bid timing*/}
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+                              {/* bid timing showing Ends here */}
+  
+                              {/* bid box  starts here */}
+                              <div className="  mt-4 bg-[#E5E9F9] rounded-lg">
+                                <div className="px-4 py-2">
+                                  <h2 className="text-base  text-gray-900  text-center font-roboto font-bold">
+                                    Bid Details
+                                  </h2>
+  
+                                  <div className="space-y-2 mt-2 text-sm">
+                                    <div className="flex items-center justify-between">
+                                    <span className="font-roboto font-medium text-sm text-[#646464]" >Start Price</span>
+                                      <span className="font-bold text-base"> ₹ {item?.startPrice}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                    <span  className="font-roboto font-medium text-sm text-[#646464]">Reserve Price</span>
+                                      <span  className="font-bold text-base">₹ {item?.reservePrice}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                    <span  className="font-roboto font-medium text-sm text-[#646464]">Quote Increment</span>
+                                      <span  className="font-bold text-base">₹ {item?.quoteIncreament}</span>
+                                    </div>
+                                    <div className="flex  items-center justify-between">
+                                      <span  className="font-bold">Current Status</span>
+                                      {item.userVehicleBidsCount &&
+                                      item.myBidRank ? (
+                                        item.myBidRank == 1 ? (
+                                          <p className="space-x-2">
+                                            <FontAwesomeIcon icon={faThumbsUp} />
+                                            <span style={{ color: "#00CC00" }}  className="font-bold text-base">
+                                              Winning
+                                            </span>
+                                          </p>
+                                        ) : (
+                                          <p className="space-x-2">
+                                            {" "}
+                                            <FontAwesomeIcon
+                                              icon={faThumbsDown}
+                                            />{" "}
+                                            <span style={{ color: "#FF3333" }}  className="font-bold text-base">
+                                              Losing
+                                            </span>
+                                          </p>
+                                        )
+                                      ) : (
+                                        <p className="space-x-2">
+                                          <FontAwesomeIcon icon={faUserSlash} />{" "}
+                                          <span style={{ color: "#CCCC00" }}  className="font-bold text-base">
+                                            Not Enrolled
+                                          </span>
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div>
+                                  {IsCompleted(item) && (
+                                    <EnterBid
+                                      row={item}
+                                      call={CallBid}
+                                      event={data["event"]}
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                              {/* bid box  ends here */}
+                         
+                          {/* bid box and bid timing ends here */}
+                        </div>
+  
+                        {/* bid box and bid timing ends here */}
+                      </div>
+  
+                      {/* MOBILE DESIGNS  end here */}
+                  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+                      {/* dESKTOP DESIGN */}
+                      <div
+                        key={`d${index}`}
+                        className={`hidden sm:flex sm:max-md:flex-col font-sans border  rounded  ${
+                          moment(item?.bidTimeExpire).diff(moment(), "s") <=
+                            120 &&
+                          moment(item?.bidTimeExpire).diff(moment(), "s") > 0
+                            ? "blink"
+                            : ""
+                        } ${
+                          index % 2 == 0
+                            ? "border-yellow-300 bg-gray-100 "
+                            : "border-gray-300 bg-slate-50"
+                        }  `}
+                      >
+                        {item?.frontImage && (
+                          <div
+                            className="flex-none w-70 h-56  sm:max-md:h-56 sm:max-md:w-full md:h-auto sm:w-60 relative p-6 hover:cursor-pointer"
+                            onClick={() => {
+                              // BindVehicleImage(item);
+                              setImages((item?.frontImage).split(","));
+  
+                              setShowImageCarouselModal(true);
+                            }}
+                          >
+                            <Image
+                              alt="img"
+                              src={item?.frontImage}
+                              layout="fill"
+                              className="absolute inset-0 w-full h-full object-cover rounded"
+                            />
+                          </div>
+                        )}
+                        <div className={`flex-auto p-3 lg:space-y-4 sm:p-6 `}>
+                          <div className="mb-3">
+                            {find?.length > 0 && (
+                              <Link href={`/workbook/${find[0].id}`}>
+                                <a
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Click here to view the workbook"
+                                  className="bg-blue-700 p-2 cursor-pointer rounded-md text-white animate-pulse"
+                                >
+                                  WorkBook matched
+                                </a>
+                              </Link>
+                            )}
+                          </div>
+  
+                          <div className="sm:flex flex-wrap">
+                            <div className="flex-auto">
+                              <h1 className="   text-base sm:text-lg   font-bold sm:font-semibold text-blue-800 uppercase">
+                                {item?.yearOfManufacture} {item?.make} -
+                                {item.registrationNumber}
+                              </h1>
+                              <div className="text-sm font-medium text-black">
+                                {data?.event?.seller?.name}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="">
+                            <button
+                              className=" sm:hidden flex justify-center w-full  text-black font-normal py-1 px-4 rounded"
+                              onClick={handleClick}
+                            >
+                              {showCode ? (
+                                <span className="text-blue-800 font-semibold">
+                                  {" "}
+                                  Hide Details
+                                </span>
+                              ) : (
+                                <span className="text-blue-800 font-semibold">
+                                  {" "}
+                                  Show Details
+                                </span>
+                              )}
+                            </button>
+                            <div
+                              className={`${
+                                showCode ? "block mt-2 sm:mt-4" : "hidden"
+                              } sm:block  `}
+                            >
+                              <dl className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-3">
+                                <div className="sm:col-span-1 flex items-center justify-between sm:block">
+                                  <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                    Odometer
+                                  </dt>
+                                  <dd className="text-sm font-medium sm:font-normal text-gray-900">
+                                    {item?.kmReading ?? "N/A"} km
+                                  </dd>
+                                </div>
+                                {/* <div className=" sm:col-span-1 flex items-center justify-between sm:block">
+                              <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                Ownership
+                              </dt>
+                              <dd className="text-sm font-medium sm:font-normal file: text-gray-900">
+                                {item?.ownership}
+                              </dd>
+                            </div> */}
+                                <div className="sm:col-span-1 flex items-center justify-between sm:block">
+                                  <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                    RC Book
+                                  </dt>
+                                  <dd className="text-sm font-medium sm:font-normal text-gray-900">
+                                    {item?.rcStatus}
+                                  </dd>
+                                </div>
+                                <div className="sm:col-span-1 flex items-center justify-between sm:block">
+                                  <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                    Repo date
+                                  </dt>
+                                  <dd className="text-sm text-gray-900">
+                                    {item?.repoDt
+                                      ? new Date(
+                                          item?.repoDt
+                                        ).toLocaleDateString()
+                                      : "N/A"}
+                                  </dd>
+                                </div>
+                                <div className="sm:col-span-1 flex items-center justify-between sm:block">
+                                  <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                    Total Bids
+                                  </dt>
+                                  <dd className="text-sm font-medium sm:font-normal text-gray-900">
+                                    {item?.totalBids}
+                                  </dd>
+                                </div>
+                                <div className="sm:col-span-1 flex items-center justify-between sm:block">
+                                  <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                    Bids Remaining
+                                  </dt>
+                                  <dd className="text-sm font-medium sm:font-normal text-gray-900">
+                                    {data?.event?.noOfBids -
+                                      item?.userVehicleBidsCount}
+                                  </dd>
+                                </div>
+                                <div className="sm:col-span-1 flex items-center justify-between sm:block">
+                                  <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                    Rank
+                                  </dt>
+                                  <dd className="text-base font-medium sm:font-normal text-gray-900">
+                                    {item?.myBidRank ? item.myBidRank : "N/A"}
+                                  </dd>
+                                </div>
+                                {data.event.bidLock === "locked" ? (
+                                  <div className="sm:col-span-1 flex items-center justify-between sm:block">
+                                    <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                      Current Quote
+                                    </dt>
+                                    <dd className="text-base font-medium sm:font-normal text-gray-900">
+                                      {item?.currentBidAmount ?? "N/A"}
+                                    </dd>
+                                  </div>
+                                ) : (
+                                  <div className="sm:col-span-1 flex items-center justify-between sm:block">
+                                    <dt className="text-sm font-bold sm:font-medium text-gray-500">
+                                      Your Latest Quote
+                                    </dt>
+                                    <dd className="text-base font-medium sm:font-normal text-gray-900">
+                                      {item?.userVehicleBids?.length
+                                        ? item?.userVehicleBids[0].amount
+                                        : "N/A"}
+                                    </dd>
+                                  </div>
+                                )}
+                              </dl>
+                            </div>
+                          </div>
+  
+                          <div className="flex  space-x-4 mt-6 pt-4 text-sm font-medium border-t  border-slate-300">
+                            <div className="flex-auto flex space-x-4">
+                              <div className="mt-1 flex flex-row sm:flex-wrap sm:mt-0 space-x-2 sm:space-x-6 justify-around w-full  sm:max-md:justify-around sm:max-md:w-full ">
+                                {IsCompleted(item) && (
+                                  <div className="mt-2 flex items-center text-sm text-gray-500">
+                                    {item?.watchedBy?.filter(
+                                      (watchlistUser) =>
+                                        watchlistUser?.id === userId
+                                    ).length > 0 ? (
+                                      <button
+                                        type="button"
+                                        className="inline-flex items-center px-2 py-1 border border-transparent shadow-sm text-xs sm:text-sm  leading-4 font-medium rounded text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                        onClick={() =>
+                                          removeFromWatchList(item.id)
+                                        }
+                                      >
+                                        <MinusIcon
+                                          className="-ml-0.5 mr-2 h-4 w-4"
+                                          aria-hidden="true"
+                                        />
+                                        from watchlist
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        className="inline-flex items-center px-2 py-1 border border-transparent shadow-sm text-xs sm:text-sm leading-4 font-medium rounded text-white bg-blue-800 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                        onClick={() => addToWatchList(item.id)}
+                                      >
+                                        <PlusIcon
+                                          className="-ml-0.5 mr-2 h-4 w-4"
+                                          aria-hidden="true"
+                                        />
+                                        Add to watchlist
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+  
+                                {/* {IsCompleted(item) && (
+                              <div className="mt-2 flex items-center text-sm text-gray-500">
+                                {!(item.watchedByCount > 0) ? (
+                                  <button
+                                    type="button"
+                                    className="inline-flex items-center px-2 py-1 border border-transparent shadow-sm text-sm leading-4 font-medium rounded text-white bg-blue-800 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                    onClick={() => addToWatchList(item.id)}
+                                  >
+                                    <PlusIcon
+                                      className="-ml-0.5 mr-2 h-4 w-4"
+                                      aria-hidden="true"
+                                    />
+                                    Add to watchlist
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="inline-flex items-center px-2 py-1 border border-transparent shadow-sm text-sm leading-4 font-medium rounded text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                    onClick={() => removeFromWatchList(item.id)}
+                                  >
+                                    <MinusIcon
+                                      className="-ml-0.5 mr-2 h-4 w-4"
+                                      aria-hidden="true"
+                                    />
+                                    from watchlist
+                                  </button>
+                                )}
+                              </div>
+                            )} */}
+  
+                                <div
+                                  className="mt-2 flex items-center text-sm text-blue-800 hover:cursor-pointer hover:text-blue-600"
+                                  // onClick={() => setShowInspectionReportModal(true)}
+                                  onClick={() => {}}
+                                >
+                                  {/* <DocumentReportIcon
+                                className="flex-shrink-0 mr-1.5 h-5 w-5 text-blue-700"
+                                aria-hidden="true"
+                              />
+                              Inspection Report
+                               */}
+                                  <Link href={item.inspectionLink}>
+                                    <a
+                                      target="_blank"
+                                      className="flex items-center text-xs sm:text-sm  text-blue-800"
+                                    >
+                                      <DocumentReportIcon
+                                        className="flex-shrink-0 mr-1.5 h-5 w-5 text-blue-700"
+                                        aria-hidden="true"
+                                      />
+                                      Inspection Report
+                                    </a>
+                                  </Link>
+                                </div>
+                                <div className="mt-2">
+                                  <Link href={`/vehicle/${item.id}`}>
+                                    <a
+                                      target="_blank"
+                                      className="flex items-center text-xs sm:text-sm  text-blue-800"
+                                    >
+                                      <ClipboardListIcon
+                                        className="flex-shrink-0 mr-1.5 h-5 w-5 text-blue-700"
+                                        aria-hidden="true"
+                                      />
+                                      More Details
+                                    </a>
+                                  </Link>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        {/* starts at herer */}
+                        <div className="flex-none w-50   sm:max-md:w-full text-center mx-auto sm:w-60 ">
+                          <div className="flex sm:max-md:flex-row flex-col items-center  justify-center  relative p-4 space-y-2">
+                            <div className="w-full  sm:max-md:w-1/2 sm:max-md:self-start    sm:max-md:text-left space-y-2 mt-1 sm:mt-2 ">
+                              <span className="sm:max-md:text-base md:text-left">
+                                {" "}
+                                {SecondsLeft(item)}
+                              </span>
+                              <div className="hidden sm:block">
+                                <div className=" flex flex-col md:items-start justify-left text-xs sm:max-md:text-sm text-gray-700">
+                                  <span className="font-semibold">
+                                    Start Date
+                                  </span>
+                                  <span>
+                                    {data.event.startDate
+                                      ? moment(data.event.startDate).format(
+                                          "MMMM Do, YYYY ddd h:mm a"
+                                        )
+                                      : "NA"}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex flex-col md:items-start text-xs sm:max-md:text-sm text-gray-700">
+                                <span className="font-semibold">End Date</span>
+                                <span>
+                                  {item?.bidTimeExpire
+                                    ? moment(item?.bidTimeExpire).format(
+                                        "MMMM Do, YYYY ddd h:mm a"
+                                      )
+                                    : "NA"}
+                                </span>
+                              </div>
+                            </div>
+  
+                            <div className=" w-64 sm:max-md:w-1/2 md:w-full bg-gray-200 rounded-lg">
+                              <div className="px-4 py-2">
+                                <h2 className="text-sm font-semibold text-gray-900">
+                                  Bid Details
+                                </h2>
+  
+                                <div className="space-y-2 mt-2">
+                                  <div className="flex items-center justify-between text-xs text-gray-700">
+                                    <span>Start Price</span>
+                                    <span>{item?.startPrice}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs text-gray-700">
+                                    <span>Reserve Price</span>
+                                    <span>{item?.reservePrice}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs text-gray-700">
+                                    <span>Quote Increment</span>
+                                    <span>{item?.quoteIncreament}</span>
+                                  </div>
+                                  <div className="flex  items-center justify-between text-xs text-gray-700">
+                                    <span>Current Status</span>
+                                    {item.userVehicleBidsCount &&
+                                    item.myBidRank ? (
+                                      item.myBidRank == 1 ? (
+                                        <p className="space-x-2">
+                                          <FontAwesomeIcon icon={faThumbsUp} />
+                                          <span style={{ color: "#00CC00" }}>
+                                            Winning
+                                          </span>
+                                        </p>
+                                      ) : (
+                                        <p className="space-x-2">
+                                          {" "}
+                                          <FontAwesomeIcon
+                                            icon={faThumbsDown}
+                                          />{" "}
+                                          <span style={{ color: "#FF3333" }}>
+                                            Losing
+                                          </span>
+                                        </p>
+                                      )
+                                    ) : (
+                                      <p className="space-x-2">
+                                        <FontAwesomeIcon icon={faUserSlash} />{" "}
+                                        <span style={{ color: "#CCCC00" }}>
+                                          Not Enrolled
+                                        </span>
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div>
+                                {IsCompleted(item) && (
+                                  <EnterBid
+                                    row={item}
+                                    call={CallBid}
+                                    event={data["event"]}
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        {/* end here */}
+                      </div>
+                    </>
+                  );
+                }
+              } else {
+                return null;
+              }
+            })}
           </div>
-        </section>
+        )}
+        <InspectionReportModal
+          color="blue"
+          open={showInspectionReportModal}
+          close={() => setShowInspectionReportModal(false)}
+        />
+        <ImageCarouselModal
+          color="blue"
+          open={showImageCarouselModal}
+          close={() => setShowImageCarouselModal(false)}
+          images={images}
+        />
+      </DashboardTemplate>
+    );
+  }
+  
+  export default withPrivateRoute(Stocks);
+  
+  const EnterBid = ({ row, call, event }) => {
+    const [bidAmount, setBidAmount] = useState("");
+  
+    useEffect(() => {
+      if (event.bidLock === "locked") {
+        if (row.currentBidAmount !== null && row.currentBidAmount !== undefined) {
+          setBidAmount(row.currentBidAmount.toString());
+        }
+      } else {
+        if (row.currentBidAmount !== null && row.currentBidAmount !== undefined) {
+          let amt = row?.userVehicleBids?.length
+            ? row?.userVehicleBids[0].amount
+            : row.startPrice;
+          setBidAmount(amt.toString());
+        }
+      }
+    }, [event.bidLock, row.currentBidAmount]);
+  
+    const enrolled = row.userVehicleBidsCount > 0;
+  
+    return (
+      <div>
+        {event?.bidLock === "locked" ? (
+          <input
+            id="input"
+            className="w-full border border-gray-500 px-5 py-2 placeholder-gray-500 focus:outline-none rounded-md"
+            placeholder="Enter amount"
+            // defaultValue={row.currentBidAmount !==0 ? row.currentBidAmount  :row.startPrice }
+            value={bidAmount !== "0" ? bidAmount : row.startPrice}
+            onChange={(e) => {
+              setBidAmount(e.target.value.replace(/\D/g, ""));
+            }}
+          />
+        ) : (
+          <input
+            id="input"
+            className="w-full border border-gray-400 px-5 py-2 placeholder-gray-500 focus:outline-none rounded-md"
+            placeholder="Enter amount"
+            // defaultValue={row.currentBidAmount !==0 ? row.currentBidAmount  :row.startPrice }
+            value={bidAmount !== "0" ? bidAmount : row.startPrice}
+            onChange={(e) => {
+              setBidAmount(e.target.value.replace(/\D/g, ""));
+            }}
+          />
+        )}
+  
+        <button
+          type="submit"
+          className="mt-2 w-full flex items-center justify-center px-5 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+          onClick={() => {
+            if (parseInt(bidAmount) === 0) {
+              call(row.startPrice, row.id);
+              setTimeout(() => {
+                // setBidAmount("");
+              }, 1000);
+            } else if (
+              event?.bidLock === "locked" &&
+              row?.currentBidAmount >= parseInt(bidAmount)
+            ) {
+              Swal.fire({
+                title: "Bid amount should be greater than last bid",
+                confirmButtonText: "OK",
+                position: "top",
+              });
+            } else if (parseInt(bidAmount) % row.quoteIncreament !== 0) {
+              Swal.fire({
+                title:
+                  "Bid amount should be greater than minimum quote increment.",
+                confirmButtonText: "OK",
+                position: "top",
+              });
+            } else if (row.startPrice > parseInt(bidAmount)) {
+              Swal.fire({
+                title: "Bid amount should be greater than start price.",
+                confirmButtonText: "OK",
+                position: "top",
+              });
+            } else if (parseInt(bidAmount) > 2147483647) {
+              Swal.fire({
+                title: "Bid amount exceeded the limit.",
+                confirmButtonText: "OK",
+                position: "top",
+              });
+            } else {
+              call(bidAmount, row.id);
+              setTimeout(() => {
+                // setBidAmount("");
+              }, 1000);
+            }
+          }}
+        >
+          Bid Now
+        </button>
       </div>
-    </DashboardTemplate>
-  );
-}
-
-export default withPrivateRoute(Vehicle);
-
-function GeneralDetailsTab(props) {
-  return (
-    <div className="border border-gray-200 px-4 py-5 sm:p-0 rounded">
-      <dl className="sm:divide-y sm:divide-gray-200">
-        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Power Steering</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.powerSteering}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Fuel Type</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.fuel}
-          </dd>
-        </div>
-
-        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Transmission</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.gearBox}
-          </dd>
-        </div>
-        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Shape</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.shape}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Color</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.color}
-          </dd>
-        </div>
-        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">
-            Year of Manufacure
-          </dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.yearOfManufacture}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Maker</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.make}
-          </dd>
-        </div>
-        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">State</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.state}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">City</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.city}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Yard Name</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.yardLocation}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Yard Location</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.veicleLocation}
-          </dd>
-        </div>
-      </dl>
-    </div>
-  );
-}
-
-function RegistrationDetailsTab(props) {
-  return (
-    <div className="border border-gray-200 px-4 py-5 sm:p-0 rounded">
-      <dl className="sm:divide-y sm:divide-gray-200">
-        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Reg No.</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.registrationNumber}
-          </dd>
-        </div>
-
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Engine No.</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.engineNo}
-          </dd>
-        </div>
-
-        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Chassis No.</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.chassisNo}
-          </dd>
-        </div>
-
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Odometer</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.kmReading}
-          </dd>
-        </div>
-
-        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">
-            Date of Registration
-          </dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.dateOfRegistration
-              ? moment(props?.vehicle?.dateOfRegistration).format(
-                  "MMMM Do, YYYY"
-                )
-              : ""}
-          </dd>
-        </div>
-      </dl>
-    </div>
-  );
-}
-
-function InsuranceDetailsTab(props) {
-  return (
-    <div className="border border-gray-200 px-4 py-5 sm:p-0 rounded">
-      <dl className="sm:divide-y sm:divide-gray-200">
-        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">
-            Insurance Status
-          </dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.insuranceStatus}
-          </dd>
-        </div>
-
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Insurance Type</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.insurance}
-          </dd>
-        </div>
-
-        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">
-            Insurance Valid Till
-          </dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.insuranceValidTill
-              ? moment(props?.vehicle?.insuranceValidTill).format(
-                  "MMMM Do, YYYY"
-                )
-              : ""}
-          </dd>
-        </div>
-        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Tax</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.tax}
-          </dd>
-        </div>
-
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">
-            Tax Validity Date
-          </dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.taxValidityDate
-              ? moment(props?.vehicle?.taxValidityDate).format("MMMM Do, YYYY")
-              : ""}
-          </dd>
-        </div>
-      </dl>
-    </div>
-  );
-}
-
-function OtherDetailsTab(props) {
-  return (
-    <div className="border border-gray-200 px-4 py-5 sm:p-0 rounded">
-      <dl className="sm:divide-y sm:divide-gray-200">
-        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Hypothication</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.hypothication}
-          </dd>
-        </div>
-
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Climate Control</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.climateControl}
-          </dd>
-        </div>
-        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Door Count</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.doorCount}
-          </dd>
-        </div>
-
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">
-            Vehicle Condition
-          </dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.vehicleCondition}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Payment Terms</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.paymentTerms}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">
-            Autobse Contact Person
-          </dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.autobse_contact_person}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">
-            Autobse Contact Number
-          </dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.autobseContact}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Customer Name</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.registeredOwnerName}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Repo Date</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.repoDt
-              ? moment(props?.vehicle?.repoDt).format("MMMM Do, YYYY")
-              : ""}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">
-            Loan Agreement Number
-          </dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.loanAgreementNo}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Buyer Fees</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.buyerFees}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Parking Charge</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.parkingCharges}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">Parking Rate</dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.parkingRate}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">
-            Client Contact Person
-          </dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.clientContactPerson}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">
-            Client Contact Number
-          </dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.clientContactNo}
-          </dd>
-        </div>
-        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <dt className="text-sm font-medium text-gray-500">
-            Additional Remarks
-          </dt>
-          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-            {props?.vehicle?.additionalRemarks}
-          </dd>
-        </div>
-      </dl>
-    </div>
-  );
-}
+    );
+  };
+  

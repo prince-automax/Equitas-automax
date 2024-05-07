@@ -18,7 +18,8 @@ const nextConfig = {
             "api-dev.autobse.com",
             "ops.adroitauto.in",
             "autobseimagesandexcel-dev.s3.ap-south-1.amazonaws.com",
-            "api-dev.autobse.comhttps"
+            "api-dev.autobse.comhttps",
+            "autobse.in"
         ],
     },
 };
