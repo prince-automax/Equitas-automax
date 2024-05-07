@@ -4806,6 +4806,18 @@ export type CreateSellACarMutationVariables = Exact<{
 
 export type CreateSellACarMutation = { __typename?: 'Mutation', createSellACar?: { __typename?: 'SellACar', id: string, interiorImages?: string | null, exteriorImages?: string | null, user?: { __typename?: 'User', id: string } | null } | null };
 
+export type GetStocksQueryVariables = Exact<{
+  where: EventWhereUniqueInput;
+  orderBy: Array<VehicleOrderByInput> | VehicleOrderByInput;
+  take?: InputMaybe<Scalars['Int']>;
+  skip: Scalars['Int'];
+  userVehicleBidsOrderBy2: Array<BidOrderByInput> | BidOrderByInput;
+  vehiclesWhere2: VehicleWhereInput;
+}>;
+
+
+export type GetStocksQuery = { __typename?: 'Query', event?: { __typename?: 'Event', id: string, eventNo?: number | null, startDate?: any | null, endDate?: any | null, vehiclesCount?: number | null, noOfBids?: number | null, termsAndConditions?: string | null, bidLock?: EventBidLockType | null, seller?: { __typename?: 'Seller', name?: string | null } | null, eventType?: Array<{ __typename?: 'EventType', name?: string | null }> | null, location?: { __typename?: 'Location', name?: string | null, country?: string | null, city?: string | null, state?: { __typename?: 'State', name?: string | null } | null } | null, ExcelFile?: { __typename?: 'ExcelUpload', file?: { __typename?: 'FileFieldOutput', url: string } | null } | null, vehicles?: Array<{ __typename?: 'Vehicle', id: string, registrationNumber?: string | null, loanAgreementNo?: string | null, registeredOwnerName?: string | null, make?: string | null, model?: string | null, watchedByCount?: number | null, varient?: string | null, categoty?: string | null, fuel?: string | null, type?: string | null, rcStatus?: string | null, yearOfManufacture?: number | null, ownership?: number | null, kmReading?: number | null, startPrice?: number | null, reservePrice?: number | null, repoDt?: any | null, currentBidAmount?: number | null, veicleLocation?: string | null, yardLocation?: string | null, chassisNo?: string | null, engineNo?: string | null, frontImage?: string | null, rightImage?: string | null, inspectionLink?: string | null, bidTimeExpire?: any | null, myBidRank?: number | null, userVehicleBidsCount?: number | null, totalBids?: number | null, quoteIncreament?: number | null, currentBidUser?: { __typename?: 'User', id: string } | null, userVehicleBids?: Array<{ __typename?: 'Bid', amount?: number | null }> | null, watchedBy?: Array<{ __typename?: 'User', id: string }> | null }> | null } | null };
+
 export type UserPaymentsQueryVariables = Exact<{
   where: UserWhereUniqueInput;
 }>;
@@ -5801,6 +5813,95 @@ export const useCreateSellACarMutation = <
     useMutation<CreateSellACarMutation, TError, CreateSellACarMutationVariables, TContext>(
       ['CreateSellACar'],
       (variables?: CreateSellACarMutationVariables) => fetcher<CreateSellACarMutation, CreateSellACarMutationVariables>(client, CreateSellACarDocument, variables, headers)(),
+      options
+    );
+export const GetStocksDocument = `
+    query GetStocks($where: EventWhereUniqueInput!, $orderBy: [VehicleOrderByInput!]!, $take: Int, $skip: Int!, $userVehicleBidsOrderBy2: [BidOrderByInput!]!, $vehiclesWhere2: VehicleWhereInput!) {
+  event(where: $where) {
+    id
+    eventNo
+    startDate
+    endDate
+    vehiclesCount
+    seller {
+      name
+    }
+    eventType {
+      name
+    }
+    noOfBids
+    location {
+      name
+      country
+      state {
+        name
+      }
+      city
+    }
+    ExcelFile {
+      file {
+        url
+      }
+    }
+    termsAndConditions
+    vehicles(orderBy: $orderBy, where: $vehiclesWhere2) {
+      id
+      registrationNumber
+      loanAgreementNo
+      registeredOwnerName
+      make
+      model
+      watchedByCount
+      varient
+      categoty
+      fuel
+      type
+      rcStatus
+      yearOfManufacture
+      ownership
+      kmReading
+      startPrice
+      reservePrice
+      repoDt
+      currentBidAmount
+      veicleLocation
+      yardLocation
+      chassisNo
+      engineNo
+      frontImage
+      rightImage
+      inspectionLink
+      currentBidUser {
+        id
+      }
+      bidTimeExpire
+      myBidRank
+      userVehicleBidsCount
+      userVehicleBids(take: $take, skip: $skip, orderBy: $userVehicleBidsOrderBy2) {
+        amount
+      }
+      totalBids
+      quoteIncreament
+      watchedBy {
+        id
+      }
+    }
+    bidLock
+  }
+}
+    `;
+export const useGetStocksQuery = <
+      TData = GetStocksQuery,
+      TError = unknown
+    >(
+      client: GraphQLClient,
+      variables: GetStocksQueryVariables,
+      options?: UseQueryOptions<GetStocksQuery, TError, TData>,
+      headers?: RequestInit['headers']
+    ) =>
+    useQuery<GetStocksQuery, TError, TData>(
+      ['GetStocks', variables],
+      fetcher<GetStocksQuery, GetStocksQueryVariables>(client, GetStocksDocument, variables, headers),
       options
     );
 export const UserPaymentsDocument = `
