@@ -85,9 +85,9 @@ function Stocks() {
     { refetchInterval: 1000 }
   );
 
-  useEffect(() => {
-    window.location.reload();
-  }, []);
+  // useEffect(() => {
+  //   window.location.reload();
+  // }, []);
 
   useEffect(() => {
     if (timeData && timeData.time) {
