@@ -110,13 +110,14 @@ export default function Navbar() {
       current: router.pathname == "/sellacar" ? true : false,
       icon: <FontAwesomeIcon icon={faCar} />,
     },
-    stockurl ? {
-      name: "View Stocks",
-      href: `${stockurl}`,
-      current: currenPath === `${stockurl}` ? true : false,
-      icon: <FontAwesomeIcon icon={faSwatchbook} />,
-    } : null,
-  ].filter(Boolean); 
+    // stockurl ? {
+    //   name: "View Stocks",
+    //   href: `${stockurl}`,
+    //   current: currenPath === `${stockurl}` ? true : false,
+    //   icon: <FontAwesomeIcon icon={faSwatchbook} />,
+    // } : null,
+  ]
+  // .filter(Boolean); 
 
   return (
     <div className="bg-white overflow-hidden">
