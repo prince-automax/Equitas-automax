@@ -86,6 +86,10 @@ function Stocks() {
   );
 
   useEffect(() => {
+    window.location.reload();
+  }, []);
+
+  useEffect(() => {
     if (timeData && timeData.time) {
       setTick(0);
       setserverTime(timeData.time);
