@@ -62,11 +62,11 @@ function Stock() {
   const [serverTime, setserverTime] = useState(null);
   const [showImageCarouselModal, setShowImageCarouselModal] = useState(false);
 
-  useEffect(() => {
-    window.location.reload();
-  }, []);
+  // useEffect(() => {
+  //   window.location.reload();
+  // }, []);
 
-  
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("token");
