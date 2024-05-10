@@ -13,7 +13,8 @@ import {
   faTruckFast,
   faRightFromBracket,
   faHammer,
-  faBarsStaggered
+  faBarsStaggered,
+  faSwatchbook
 } from "@fortawesome/free-solid-svg-icons";
 import Car from "../../public/assets/racingcar.jpg";
 import Image from "next/image";
@@ -21,7 +22,7 @@ import Logo from "../ui/Logo";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import useStore from "../../utils/store";
-import { useEffect } from "react";
+import { useEffect,useState } from "react";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -29,12 +30,32 @@ function classNames(...classes) {
 
 export default function Navbar() {
   const router = useRouter();
+  const [isStocksPage, setIsStocksPage] = useState(false); // State to check if it's the stocks page
+ const [stockurl,setStocksUrl]=useState("")
+ const [isStockPresent,setIsStockPresent]=useState(false)
  const currenPath=router.asPath
  console.log("currentPath from navbar",currenPath);
   const { token, setToken } = useStore((state) => ({
     token: state.token,
     setToken: (token) => state.setToken(token),
   }));
+
+  useEffect(() => {
+    setIsStocksPage(
+      router.pathname.includes("/stock") || router.pathname.includes("/stocks")
+    );
+   const redirectUrl= localStorage.getItem("currentUrl")
+   setStocksUrl(redirectUrl)
+  }, [router.pathname]);
+
+  useEffect(()=>{
+    const redirectUrl= localStorage.getItem("currentUrl")
+    if(redirectUrl){
+      setIsStockPresent(true)
+    }
+  },[isStockPresent])
+
+  console.log("stockUrl",stockurl);
 
   const logout = () => {
     setToken(null);
@@ -89,8 +110,13 @@ export default function Navbar() {
       current: router.pathname == "/sellacar" ? true : false,
       icon: <FontAwesomeIcon icon={faCar} />,
     },
- 
-  ];
+    stockurl ? {
+      name: "View Stocks",
+      href: `${stockurl}`,
+      current: currenPath === `${stockurl}` ? true : false,
+      icon: <FontAwesomeIcon icon={faSwatchbook} />,
+    } : null,
+  ].filter(Boolean); 
 
   return (
     <div className="bg-white overflow-hidden">
@@ -108,7 +134,7 @@ export default function Navbar() {
                     <div className="-mr-2 flex items-center md:hidden">
                       <Popover.Button className="bg-white rounded-md p-2 inline-flex items-center justify-center text-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus-ring-inset focus:ring-white">
                         <span className=""></span>
-                        <MenuIcon className="h-6 w-6" aria-hidden="true" />
+                     <MenuIcon className="h-6 w-6" aria-hidden="true" />  
                         {/* <FontAwesomeIcon icon={faBarsStaggered} /> */}
 
                       </Popover.Button>

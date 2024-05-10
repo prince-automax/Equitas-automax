@@ -74,7 +74,7 @@ export default function ImageCarouselModal({ open, close, ...props }) {
 
                   <div className="mt-8">
                     <Splide options={options}>
-                      {props.images.map((image, index) => (
+                      {props?.images?.map((image, index) => (
                         <SplideSlide key={`${index}slide`}>
                           <div className="w-full h-full object-cover">
                             <Image

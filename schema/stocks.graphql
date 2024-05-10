@@ -84,3 +84,65 @@ query GetStocks(
 }
 
 }
+
+
+query SelectedVehicle($where: SelectedVehicleWhereUniqueInput!) {
+  selectedVehicle(where: $where) {
+  id
+  vehicleIds  
+  }
+}
+
+
+# query StockVehicles($where: VehicleWhereInput!) {
+#   vehicles(where: $where) {
+# id
+# }
+# }
+
+query StockVehicles($where: VehicleWhereInput!,$take: Int,$skip:Int!,$userVehicleBidsOrderBy2: [BidOrderByInput!]!) {
+  vehicles(where: $where){
+      id
+      registrationNumber
+      loanAgreementNo
+      registeredOwnerName
+      make
+      model
+      watchedByCount
+      varient
+      categoty
+      fuel
+      type
+      rcStatus
+      yearOfManufacture
+      ownership
+      kmReading
+      startPrice
+      reservePrice
+      repoDt
+      currentBidAmount
+      veicleLocation
+      yardLocation
+      chassisNo
+      engineNo
+      frontImage
+      backImage
+      leftImage
+      rightImage
+      inspectionLink
+      currentBidUser {
+        id
+      }
+      bidTimeExpire
+      myBidRank
+      userVehicleBidsCount
+      userVehicleBids(take: $take, skip: $skip, orderBy: $userVehicleBidsOrderBy2) {
+        amount
+      }
+      totalBids
+      quoteIncreament
+      watchedBy {
+        id
+      }
+    }
+}
