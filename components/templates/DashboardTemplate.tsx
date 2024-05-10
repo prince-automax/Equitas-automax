@@ -61,7 +61,9 @@ export default function DashboardTemplate({ children, heading, subHeading }) {
   }, []);
 
   useEffect(() => {
-    setIsStocksPage(router.pathname.includes("/stock"));
+    setIsStocksPage(
+      router.pathname.includes("/stock") || router.pathname.includes("/stocks")
+    );
   }, [router.pathname]);
 
   const { data, isLoading, refetch } = useLiveEventscountQuery(
@@ -215,135 +217,142 @@ export default function DashboardTemplate({ children, heading, subHeading }) {
       <main className="max-w-7xl mx-auto pb-10 py-1   ">
         <div className="lg:flex max-md:w-full relative ">
           {showSidebar && (
-            <aside className={` ${isStocksPage ? `absolute -z-10 py-0` : `static z-10 py-6`} max-md:w-full relative sm:py-0 px-2 sm:px-6  flex-none lg:border-r border-gray-200`}>
+            <aside
+              className={` ${
+                isStocksPage ? `absolute -z-10 py-0` : `static z-10 py-6`
+              } max-md:w-full relative sm:py-0 px-2 sm:px-6  flex-none  border-gray-200`}
+            >
               {/* <Welcome /> */}
               <nav className="mt-1 sm:max-lg:mt-8 space-y-4 max-md:w-full  ">
-              {/* isStocksPage */}
-               {!isStocksPage && <div className=" text-black bg-white lg:hidden flex w-full space-x-4  overflow-x-scroll scrollbar-hide ">
-                  {mobileNavigation.map((item, index) => (
-                    <ul key={index} className="space-x-4">
-                      <li className="space-x-4 ">
+                {/* isStocksPage */}
+                {!isStocksPage && (
+                  <div className=" text-black bg-white lg:hidden flex w-full space-x-4  overflow-x-scroll scrollbar-hide ">
+                    {mobileNavigation.map((item, index) => (
+                      <ul key={index} className="space-x-4">
+                        <li className="space-x-4 ">
+                          <Link key={item.name} href={item.href}>
+                            <a
+                              className={classNames(
+                                router.pathname === item.href
+                                  ? "text-white bg-orange-500 active-link transition ease-in-out transform translate-x-1"
+                                  : "text-gray-900 hover:text-gray-900 hover:bg-gray-100",
+                                "group rounded-md px-3 py-2 flex items-center text-sm font-medium border shadow-inner shadow-slate-200"
+                              )}
+                              onClick={(e) => {
+                                e.preventDefault(); // Prevent the default behavior
+                                setNavigationLink(item.href);
+                              }}
+                            >
+                              <span className="truncate">{item.name}</span>
+                            </a>
+                          </Link>
+                        </li>
+                      </ul>
+                    ))}
+                  </div>
+                )}
+                {!isStocksPage && (
+                  <div className="hidden lg:block">
+                    <div>
+                      <h3
+                        className="px-3 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider lg:mt-10"
+                        id="mobile-teams-headline"
+                      >
+                        Events
+                      </h3>
+                      {eventsNavigations.map((item) => (
                         <Link key={item.name} href={item.href}>
                           <a
                             className={classNames(
-                              router.pathname === item.href
-                                ? "text-white bg-orange-500 active-link transition ease-in-out transform translate-x-1"
+                              item.current
+                                ? "bg-gray-100 text-orange-600 hover:bg-gray-100"
                                 : "text-gray-900 hover:text-gray-900 hover:bg-gray-100",
-                              "group rounded-md px-3 py-2 flex items-center text-sm font-medium border shadow-inner shadow-slate-200"
+                              "group rounded-md px-3 py-2 flex items-center text-sm font-medium"
                             )}
-                            onClick={(e) => {
-                              e.preventDefault(); // Prevent the default behavior
-                              setNavigationLink(item.href);
-                            }}
+                            aria-current={item.current ? "page" : undefined}
                           >
+                            <item.icon
+                              className={classNames(
+                                item.current
+                                  ? "text-orange-500"
+                                  : "text-gray-400 group-hover:text-gray-500",
+                                "flex-shrink-0 -ml-1 mr-3 h-6 w-6"
+                              )}
+                              aria-hidden="true"
+                            />
                             <span className="truncate">{item.name}</span>
                           </a>
                         </Link>
-                      </li>
-                    </ul>
-                  ))}
-                </div>}
+                      ))}
+                    </div>
 
-                <div className="hidden lg:block">
-                  <div>
-                    <h3
-                      className="px-3 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider lg:mt-10"
-                      id="mobile-teams-headline"
-                    >
-                      Events
-                    </h3>
-                    {eventsNavigations.map((item) => (
-                      <Link key={item.name} href={item.href}>
-                        <a
-                          className={classNames(
-                            item.current
-                              ? "bg-gray-100 text-orange-600 hover:bg-gray-100"
-                              : "text-gray-900 hover:text-gray-900 hover:bg-gray-100",
-                            "group rounded-md px-3 py-2 flex items-center text-sm font-medium"
-                          )}
-                          aria-current={item.current ? "page" : undefined}
-                        >
-                          <item.icon
+                    <div>
+                      <h3
+                        className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                        id="mobile-teams-headline"
+                      >
+                        My Bids
+                      </h3>
+                      {activityNavigations.map((item) => (
+                        <Link key={item.name} href={item.href}>
+                          <a
                             className={classNames(
                               item.current
-                                ? "text-orange-500"
-                                : "text-gray-400 group-hover:text-gray-500",
-                              "flex-shrink-0 -ml-1 mr-3 h-6 w-6"
+                                ? "bg-gray-100 text-orange-600 hover:bg-gray-100"
+                                : "text-gray-900 hover:text-gray-900 hover:bg-gray-100",
+                              "group rounded-md px-3 py-2 flex items-center text-sm font-medium"
                             )}
-                            aria-hidden="true"
-                          />
-                          <span className="truncate">{item.name}</span>
-                        </a>
-                      </Link>
-                    ))}
-                  </div>
+                            aria-current={item.current ? "page" : undefined}
+                          >
+                            <item.icon
+                              className={classNames(
+                                item.current
+                                  ? "text-orange-500"
+                                  : "text-gray-400 group-hover:text-gray-500",
+                                "flex-shrink-0 -ml-1 mr-3 h-6 w-6"
+                              )}
+                              aria-hidden="true"
+                            />
+                            <span className="truncate">{item.name}</span>
+                          </a>
+                        </Link>
+                      ))}
+                    </div>
 
-                  <div>
-                    <h3
-                      className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider"
-                      id="mobile-teams-headline"
-                    >
-                      My Bids
-                    </h3>
-                    {activityNavigations.map((item) => (
-                      <Link key={item.name} href={item.href}>
-                        <a
-                          className={classNames(
-                            item.current
-                              ? "bg-gray-100 text-orange-600 hover:bg-gray-100"
-                              : "text-gray-900 hover:text-gray-900 hover:bg-gray-100",
-                            "group rounded-md px-3 py-2 flex items-center text-sm font-medium"
-                          )}
-                          aria-current={item.current ? "page" : undefined}
-                        >
-                          <item.icon
+                    <div>
+                      <h3
+                        className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                        id="mobile-teams-headline"
+                      >
+                        My Account
+                      </h3>
+                      {accountNavigations.map((item) => (
+                        <Link key={item.name} href={item.href}>
+                          <a
                             className={classNames(
                               item.current
-                                ? "text-orange-500"
-                                : "text-gray-400 group-hover:text-gray-500",
-                              "flex-shrink-0 -ml-1 mr-3 h-6 w-6"
+                                ? "bg-gray-100 text-orange-600 hover:bg-gray-100"
+                                : "text-gray-900 hover:text-gray-900 hover:bg-gray-100",
+                              "group rounded-md px-3 py-2 flex items-center text-sm font-medium"
                             )}
-                            aria-hidden="true"
-                          />
-                          <span className="truncate">{item.name}</span>
-                        </a>
-                      </Link>
-                    ))}
+                            aria-current={item.current ? "page" : undefined}
+                          >
+                            <item.icon
+                              className={classNames(
+                                item.current
+                                  ? "text-orange-500"
+                                  : "text-gray-400 group-hover:text-gray-500",
+                                "flex-shrink-0 -ml-1 mr-3 h-6 w-6"
+                              )}
+                              aria-hidden="true"
+                            />
+                            <span className="truncate">{item.name}</span>
+                          </a>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-
-                  <div>
-                    <h3
-                      className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider"
-                      id="mobile-teams-headline"
-                    >
-                      My Account
-                    </h3>
-                    {accountNavigations.map((item) => (
-                      <Link key={item.name} href={item.href}>
-                        <a
-                          className={classNames(
-                            item.current
-                              ? "bg-gray-100 text-orange-600 hover:bg-gray-100"
-                              : "text-gray-900 hover:text-gray-900 hover:bg-gray-100",
-                            "group rounded-md px-3 py-2 flex items-center text-sm font-medium"
-                          )}
-                          aria-current={item.current ? "page" : undefined}
-                        >
-                          <item.icon
-                            className={classNames(
-                              item.current
-                                ? "text-orange-500"
-                                : "text-gray-400 group-hover:text-gray-500",
-                              "flex-shrink-0 -ml-1 mr-3 h-6 w-6"
-                            )}
-                            aria-hidden="true"
-                          />
-                          <span className="truncate">{item.name}</span>
-                        </a>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
+                )}
               </nav>
             </aside>
           )}

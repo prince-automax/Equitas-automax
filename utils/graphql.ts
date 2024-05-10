@@ -572,6 +572,7 @@ export type Event = {
   downloadableFile?: Maybe<FileFieldOutput>;
   endDate?: Maybe<Scalars['DateTime']>;
   eventCategory?: Maybe<Scalars['String']>;
+  eventName?: Maybe<EventEventNameType>;
   eventNo?: Maybe<Scalars['Int']>;
   eventType?: Maybe<Array<EventType>>;
   eventTypeCount?: Maybe<Scalars['Int']>;
@@ -653,6 +654,7 @@ export type EventCreateInput = {
   downloadableFile?: InputMaybe<FileFieldInput>;
   endDate?: InputMaybe<Scalars['DateTime']>;
   eventCategory?: InputMaybe<Scalars['String']>;
+  eventName?: InputMaybe<EventEventNameType>;
   eventNo?: InputMaybe<Scalars['Int']>;
   eventType?: InputMaybe<EventTypeRelateToManyForCreateInput>;
   extraTime?: InputMaybe<Scalars['Int']>;
@@ -672,6 +674,18 @@ export type EventCreateInput = {
   vehicles?: InputMaybe<VehicleRelateToManyForCreateInput>;
 };
 
+export enum EventEventNameType {
+  Event = 'event',
+  Stock = 'stock'
+}
+
+export type EventEventNameTypeNullableFilter = {
+  equals?: InputMaybe<EventEventNameType>;
+  in?: InputMaybe<Array<EventEventNameType>>;
+  not?: InputMaybe<EventEventNameTypeNullableFilter>;
+  notIn?: InputMaybe<Array<EventEventNameType>>;
+};
+
 export type EventManyRelationFilter = {
   every?: InputMaybe<EventWhereInput>;
   none?: InputMaybe<EventWhereInput>;
@@ -683,6 +697,7 @@ export type EventOrderByInput = {
   createdAt?: InputMaybe<OrderDirection>;
   endDate?: InputMaybe<OrderDirection>;
   eventCategory?: InputMaybe<OrderDirection>;
+  eventName?: InputMaybe<OrderDirection>;
   eventNo?: InputMaybe<OrderDirection>;
   extraTime?: InputMaybe<OrderDirection>;
   extraTimeTrigerIn?: InputMaybe<OrderDirection>;
@@ -849,6 +864,7 @@ export type EventUpdateInput = {
   downloadableFile?: InputMaybe<FileFieldInput>;
   endDate?: InputMaybe<Scalars['DateTime']>;
   eventCategory?: InputMaybe<Scalars['String']>;
+  eventName?: InputMaybe<EventEventNameType>;
   eventNo?: InputMaybe<Scalars['Int']>;
   eventType?: InputMaybe<EventTypeRelateToManyForUpdateInput>;
   extraTime?: InputMaybe<Scalars['Int']>;
@@ -877,6 +893,7 @@ export type EventWhereInput = {
   createdAt?: InputMaybe<DateTimeNullableFilter>;
   endDate?: InputMaybe<DateTimeFilter>;
   eventCategory?: InputMaybe<StringNullableFilter>;
+  eventName?: InputMaybe<EventEventNameTypeNullableFilter>;
   eventNo?: InputMaybe<IntFilter>;
   eventType?: InputMaybe<EventTypeManyRelationFilter>;
   extraTime?: InputMaybe<IntNullableFilter>;
@@ -1533,6 +1550,8 @@ export type Mutation = {
   createNotifications?: Maybe<Array<Maybe<Notification>>>;
   createPayment?: Maybe<Payment>;
   createPayments?: Maybe<Array<Maybe<Payment>>>;
+  createSelectedVehicle?: Maybe<SelectedVehicle>;
+  createSelectedVehicles?: Maybe<Array<Maybe<SelectedVehicle>>>;
   createSellACar?: Maybe<SellACar>;
   createSellACars?: Maybe<Array<Maybe<SellACar>>>;
   createSeller?: Maybe<Seller>;
@@ -1571,6 +1590,8 @@ export type Mutation = {
   deleteNotifications?: Maybe<Array<Maybe<Notification>>>;
   deletePayment?: Maybe<Payment>;
   deletePayments?: Maybe<Array<Maybe<Payment>>>;
+  deleteSelectedVehicle?: Maybe<SelectedVehicle>;
+  deleteSelectedVehicles?: Maybe<Array<Maybe<SelectedVehicle>>>;
   deleteSellACar?: Maybe<SellACar>;
   deleteSellACars?: Maybe<Array<Maybe<SellACar>>>;
   deleteSeller?: Maybe<Seller>;
@@ -1612,6 +1633,8 @@ export type Mutation = {
   updateNotifications?: Maybe<Array<Maybe<Notification>>>;
   updatePayment?: Maybe<Payment>;
   updatePayments?: Maybe<Array<Maybe<Payment>>>;
+  updateSelectedVehicle?: Maybe<SelectedVehicle>;
+  updateSelectedVehicles?: Maybe<Array<Maybe<SelectedVehicle>>>;
   updateSellACar?: Maybe<SellACar>;
   updateSellACars?: Maybe<Array<Maybe<SellACar>>>;
   updateSeller?: Maybe<Seller>;
@@ -1765,6 +1788,16 @@ export type MutationCreatePaymentArgs = {
 
 export type MutationCreatePaymentsArgs = {
   data: Array<PaymentCreateInput>;
+};
+
+
+export type MutationCreateSelectedVehicleArgs = {
+  data: SelectedVehicleCreateInput;
+};
+
+
+export type MutationCreateSelectedVehiclesArgs = {
+  data: Array<SelectedVehicleCreateInput>;
 };
 
 
@@ -1955,6 +1988,16 @@ export type MutationDeletePaymentArgs = {
 
 export type MutationDeletePaymentsArgs = {
   where: Array<PaymentWhereUniqueInput>;
+};
+
+
+export type MutationDeleteSelectedVehicleArgs = {
+  where: SelectedVehicleWhereUniqueInput;
+};
+
+
+export type MutationDeleteSelectedVehiclesArgs = {
+  where: Array<SelectedVehicleWhereUniqueInput>;
 };
 
 
@@ -2169,6 +2212,17 @@ export type MutationUpdatePaymentArgs = {
 
 export type MutationUpdatePaymentsArgs = {
   data: Array<PaymentUpdateArgs>;
+};
+
+
+export type MutationUpdateSelectedVehicleArgs = {
+  data: SelectedVehicleUpdateInput;
+  where: SelectedVehicleWhereUniqueInput;
+};
+
+
+export type MutationUpdateSelectedVehiclesArgs = {
+  data: Array<SelectedVehicleUpdateArgs>;
 };
 
 
@@ -2532,6 +2586,9 @@ export type Query = {
   payment?: Maybe<Payment>;
   payments?: Maybe<Array<Payment>>;
   paymentsCount?: Maybe<Scalars['Int']>;
+  selectedVehicle?: Maybe<SelectedVehicle>;
+  selectedVehicles?: Maybe<Array<SelectedVehicle>>;
+  selectedVehiclesCount?: Maybe<Scalars['Int']>;
   sellACar?: Maybe<SellACar>;
   sellACars?: Maybe<Array<SellACar>>;
   sellACarsCount?: Maybe<Scalars['Int']>;
@@ -2811,6 +2868,24 @@ export type QueryPaymentsCountArgs = {
 };
 
 
+export type QuerySelectedVehicleArgs = {
+  where: SelectedVehicleWhereUniqueInput;
+};
+
+
+export type QuerySelectedVehiclesArgs = {
+  orderBy?: Array<SelectedVehicleOrderByInput>;
+  skip?: Scalars['Int'];
+  take?: InputMaybe<Scalars['Int']>;
+  where?: SelectedVehicleWhereInput;
+};
+
+
+export type QuerySelectedVehiclesCountArgs = {
+  where?: SelectedVehicleWhereInput;
+};
+
+
 export type QuerySellACarArgs = {
   where: SellACarWhereUniqueInput;
 };
@@ -2956,6 +3031,42 @@ export type RedeemUserMagicAuthTokenSuccess = {
   __typename?: 'RedeemUserMagicAuthTokenSuccess';
   item: User;
   token: Scalars['String'];
+};
+
+export type SelectedVehicle = {
+  __typename?: 'SelectedVehicle';
+  id: Scalars['ID'];
+  vehicleIds?: Maybe<Scalars['String']>;
+};
+
+export type SelectedVehicleCreateInput = {
+  vehicleIds?: InputMaybe<Scalars['String']>;
+};
+
+export type SelectedVehicleOrderByInput = {
+  id?: InputMaybe<OrderDirection>;
+  vehicleIds?: InputMaybe<OrderDirection>;
+};
+
+export type SelectedVehicleUpdateArgs = {
+  data: SelectedVehicleUpdateInput;
+  where: SelectedVehicleWhereUniqueInput;
+};
+
+export type SelectedVehicleUpdateInput = {
+  vehicleIds?: InputMaybe<Scalars['String']>;
+};
+
+export type SelectedVehicleWhereInput = {
+  AND?: InputMaybe<Array<SelectedVehicleWhereInput>>;
+  NOT?: InputMaybe<Array<SelectedVehicleWhereInput>>;
+  OR?: InputMaybe<Array<SelectedVehicleWhereInput>>;
+  id?: InputMaybe<IdFilter>;
+  vehicleIds?: InputMaybe<StringFilter>;
+};
+
+export type SelectedVehicleWhereUniqueInput = {
+  id?: InputMaybe<Scalars['ID']>;
 };
 
 export type SellACar = {
@@ -4818,6 +4929,23 @@ export type GetStocksQueryVariables = Exact<{
 
 export type GetStocksQuery = { __typename?: 'Query', event?: { __typename?: 'Event', id: string, eventNo?: number | null, startDate?: any | null, endDate?: any | null, vehiclesCount?: number | null, noOfBids?: number | null, termsAndConditions?: string | null, bidLock?: EventBidLockType | null, seller?: { __typename?: 'Seller', name?: string | null } | null, eventType?: Array<{ __typename?: 'EventType', name?: string | null }> | null, location?: { __typename?: 'Location', name?: string | null, country?: string | null, city?: string | null, state?: { __typename?: 'State', name?: string | null } | null } | null, ExcelFile?: { __typename?: 'ExcelUpload', file?: { __typename?: 'FileFieldOutput', url: string } | null } | null, vehicles?: Array<{ __typename?: 'Vehicle', id: string, registrationNumber?: string | null, loanAgreementNo?: string | null, registeredOwnerName?: string | null, make?: string | null, model?: string | null, watchedByCount?: number | null, varient?: string | null, categoty?: string | null, fuel?: string | null, type?: string | null, rcStatus?: string | null, yearOfManufacture?: number | null, ownership?: number | null, kmReading?: number | null, startPrice?: number | null, reservePrice?: number | null, repoDt?: any | null, currentBidAmount?: number | null, veicleLocation?: string | null, yardLocation?: string | null, chassisNo?: string | null, engineNo?: string | null, frontImage?: string | null, rightImage?: string | null, inspectionLink?: string | null, bidTimeExpire?: any | null, myBidRank?: number | null, userVehicleBidsCount?: number | null, totalBids?: number | null, quoteIncreament?: number | null, currentBidUser?: { __typename?: 'User', id: string } | null, userVehicleBids?: Array<{ __typename?: 'Bid', amount?: number | null }> | null, watchedBy?: Array<{ __typename?: 'User', id: string }> | null }> | null } | null };
 
+export type SelectedVehicleQueryVariables = Exact<{
+  where: SelectedVehicleWhereUniqueInput;
+}>;
+
+
+export type SelectedVehicleQuery = { __typename?: 'Query', selectedVehicle?: { __typename?: 'SelectedVehicle', id: string, vehicleIds?: string | null } | null };
+
+export type StockVehiclesQueryVariables = Exact<{
+  where: VehicleWhereInput;
+  take?: InputMaybe<Scalars['Int']>;
+  skip: Scalars['Int'];
+  userVehicleBidsOrderBy2: Array<BidOrderByInput> | BidOrderByInput;
+}>;
+
+
+export type StockVehiclesQuery = { __typename?: 'Query', vehicles?: Array<{ __typename?: 'Vehicle', id: string, registrationNumber?: string | null, loanAgreementNo?: string | null, registeredOwnerName?: string | null, make?: string | null, model?: string | null, watchedByCount?: number | null, varient?: string | null, categoty?: string | null, fuel?: string | null, type?: string | null, rcStatus?: string | null, yearOfManufacture?: number | null, ownership?: number | null, kmReading?: number | null, startPrice?: number | null, reservePrice?: number | null, repoDt?: any | null, currentBidAmount?: number | null, veicleLocation?: string | null, yardLocation?: string | null, chassisNo?: string | null, engineNo?: string | null, frontImage?: string | null, backImage?: string | null, leftImage?: string | null, rightImage?: string | null, inspectionLink?: string | null, bidTimeExpire?: any | null, myBidRank?: number | null, userVehicleBidsCount?: number | null, totalBids?: number | null, quoteIncreament?: number | null, currentBidUser?: { __typename?: 'User', id: string } | null, userVehicleBids?: Array<{ __typename?: 'Bid', amount?: number | null }> | null, watchedBy?: Array<{ __typename?: 'User', id: string }> | null }> | null };
+
 export type UserPaymentsQueryVariables = Exact<{
   where: UserWhereUniqueInput;
 }>;
@@ -5902,6 +6030,90 @@ export const useGetStocksQuery = <
     useQuery<GetStocksQuery, TError, TData>(
       ['GetStocks', variables],
       fetcher<GetStocksQuery, GetStocksQueryVariables>(client, GetStocksDocument, variables, headers),
+      options
+    );
+export const SelectedVehicleDocument = `
+    query SelectedVehicle($where: SelectedVehicleWhereUniqueInput!) {
+  selectedVehicle(where: $where) {
+    id
+    vehicleIds
+  }
+}
+    `;
+export const useSelectedVehicleQuery = <
+      TData = SelectedVehicleQuery,
+      TError = unknown
+    >(
+      client: GraphQLClient,
+      variables: SelectedVehicleQueryVariables,
+      options?: UseQueryOptions<SelectedVehicleQuery, TError, TData>,
+      headers?: RequestInit['headers']
+    ) =>
+    useQuery<SelectedVehicleQuery, TError, TData>(
+      ['SelectedVehicle', variables],
+      fetcher<SelectedVehicleQuery, SelectedVehicleQueryVariables>(client, SelectedVehicleDocument, variables, headers),
+      options
+    );
+export const StockVehiclesDocument = `
+    query StockVehicles($where: VehicleWhereInput!, $take: Int, $skip: Int!, $userVehicleBidsOrderBy2: [BidOrderByInput!]!) {
+  vehicles(where: $where) {
+    id
+    registrationNumber
+    loanAgreementNo
+    registeredOwnerName
+    make
+    model
+    watchedByCount
+    varient
+    categoty
+    fuel
+    type
+    rcStatus
+    yearOfManufacture
+    ownership
+    kmReading
+    startPrice
+    reservePrice
+    repoDt
+    currentBidAmount
+    veicleLocation
+    yardLocation
+    chassisNo
+    engineNo
+    frontImage
+    backImage
+    leftImage
+    rightImage
+    inspectionLink
+    currentBidUser {
+      id
+    }
+    bidTimeExpire
+    myBidRank
+    userVehicleBidsCount
+    userVehicleBids(take: $take, skip: $skip, orderBy: $userVehicleBidsOrderBy2) {
+      amount
+    }
+    totalBids
+    quoteIncreament
+    watchedBy {
+      id
+    }
+  }
+}
+    `;
+export const useStockVehiclesQuery = <
+      TData = StockVehiclesQuery,
+      TError = unknown
+    >(
+      client: GraphQLClient,
+      variables: StockVehiclesQueryVariables,
+      options?: UseQueryOptions<StockVehiclesQuery, TError, TData>,
+      headers?: RequestInit['headers']
+    ) =>
+    useQuery<StockVehiclesQuery, TError, TData>(
+      ['StockVehicles', variables],
+      fetcher<StockVehiclesQuery, StockVehiclesQueryVariables>(client, StockVehiclesDocument, variables, headers),
       options
     );
 export const UserPaymentsDocument = `

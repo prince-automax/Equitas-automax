@@ -30,6 +30,9 @@ import {
   VehiclesQuery,
   QueryQueryVariables,
   useQueryQuery,
+  useStockVehiclesQuery,
+  StockVehiclesQuery,
+  StockVehiclesQueryVariables
 } from "@utils/graphql";
 import graphQLClient from "@utils/useGQLQuery";
 import moment from "moment";
@@ -40,6 +43,7 @@ import {
   VehicleDetails,
   moreDetails,
 } from "../../utils/stocks";
+import ImageCarouselModal from "@components/modals/ImageCarouselModal";
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
@@ -56,6 +60,8 @@ function Stock() {
   const [bidAmount, setBidAmount] = useState("");
   const [tick, setTick] = useState(0);
   const [serverTime, setserverTime] = useState(null);
+  const [showImageCarouselModal, setShowImageCarouselModal] = useState(false);
+
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -598,8 +604,8 @@ function Stock() {
                     </div>
                   </p>
                   <div className="mt-4 w-full    border-white text-center bg-white px-5 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-700 focus:ring-white rounded-md">
-                    <p className="  text-black font-roboto font-semibold">
-                      BID STATUS
+                    <p className="  text-black font-roboto font-semibold uppercase">
+                     Approval status
                     </p>
                     <p className="tracking-wide text-blue-500	uppercase">
                       {vehicle?.bidStatus}
@@ -619,23 +625,39 @@ function Stock() {
             {/* mobile view of image starts here*/}
             <div className="space-y-6  w-full">
               {vehicle?.frontImage ? (
-                <section className="sm:hidden border-2 ">
-                  <div className=" h-fit border-2 rounded-lg  ">
-                    <Splide options={options} aria-label="React Splide Example">
-                      {images?.map((image, index) => (
-                        <SplideSlide key={index}>
-                          <Image
-                            alt={`image${index}`}
-                            src={image.trim()}
-                            className="w-full h-full object-center object-cover rounded-lg "
-                            width={500}
-                            height={300}
-                          />
-                        </SplideSlide>
-                      ))}
-                    </Splide>
-                  </div>
-                </section>
+                // <section className="sm:hidden border-2 ">
+                //   <div className=" h-fit border-2 rounded-lg  ">
+                //     <Splide options={options} aria-label="React Splide Example">
+                //       {images?.map((image, index) => (
+                //         <SplideSlide key={index}>
+                //           <Image
+                //             alt={`image${index}`}
+                //             src={image.trim()}
+                //             className="w-full h-full object-center object-cover rounded-lg "
+                //             width={500}
+                //             height={300}
+                //           />
+                //         </SplideSlide>
+                //       ))}
+                //     </Splide>
+                //   </div>
+                // </section>
+                <div
+                        className="flex-none w-70 h-56  sm:max-md:h-56 sm:max-md:w-full  relative p-6 m-2 hover:cursor-pointer"
+                        onClick={() => {
+                          // BindVehicleImage(item);
+                          setImages((vehicle?.frontImage).split(","));
+
+                          setShowImageCarouselModal(true);
+                        }}
+                      >
+                        <Image
+                          alt="img"
+                          src={vehicle?.frontImage}
+                          layout="fill"
+                          className="absolute inset-0 w-full h-full object-cover rounded"
+                        />
+                      </div>
               ) : (
                 <div className=" text-center sm:hidden  ">
                   <p className="font-poppins font-semibold animate-pulse ">
@@ -854,8 +876,8 @@ function Stock() {
                             </div>
                           </p>
                           <div className="mt-4 w-full mb-2   border-white text-center bg-white px-5 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-700 focus:ring-white rounded-md">
-                            <p className=" text-xl text-black font-roboto font-semibold">
-                              BID STATUS
+                            <p className=" text-xl uppercase text-black font-roboto font-semibold">
+                           Approval Status
                             </p>
                             <p className="tracking-wide text-blue-500	uppercase text-xl">
                               {vehicle?.bidStatus}
@@ -943,6 +965,12 @@ function Stock() {
 
 
       </div>
+      <ImageCarouselModal
+        color="blue"
+        open={showImageCarouselModal}
+        close={() => setShowImageCarouselModal(false)}
+        images={images}
+      />
     </DashboardTemplate>
   );
 }
