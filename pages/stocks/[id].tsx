@@ -146,7 +146,7 @@ function Stocks() {
       take: 100,
       userVehicleBidsOrderBy2: [{ amount: OrderDirection.Desc }],
     },
-    { refetchInterval: 1000 }
+    { refetchInterval: 2000 }
   );
 
   console.log("stockid", selectedData);
