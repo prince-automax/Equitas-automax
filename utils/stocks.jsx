@@ -145,3 +145,81 @@ export const moreDetails = ({ header, value }) => {
       </div>
     );
   };
+
+  export const GetEventDocument = `
+    query GetEvent($where: EventWhereUniqueInput!, $orderBy: [VehicleOrderByInput!]!, $take: Int, $skip: Int!, $userVehicleBidsOrderBy2: [BidOrderByInput!]!) {
+  event(where: $where) {
+    id
+    eventNo
+    startDate
+    endDate
+    vehiclesCount
+    seller {
+      name
+    }
+    eventType {
+      name
+    }
+    noOfBids
+    location {
+      name
+      country
+      state {
+        name
+      }
+      city
+    }
+    ExcelFile {
+      file {
+        url
+      }
+    }
+    termsAndConditions
+    vehicles(orderBy: $orderBy) {
+      id
+      registrationNumber
+      loanAgreementNo
+      registeredOwnerName
+      make
+      model
+      watchedByCount
+      varient
+      categoty
+      fuel
+      type
+      rcStatus
+      yearOfManufacture
+      ownership
+      kmReading
+      startPrice
+      reservePrice
+      repoDt
+      currentBidAmount
+      veicleLocation
+      yardLocation
+      chassisNo
+      engineNo
+      frontImage
+      backImage
+      leftImage
+      rightImage
+      inspectionLink
+      currentBidUser {
+        id
+      }
+      bidTimeExpire
+      myBidRank
+      userVehicleBidsCount
+      userVehicleBids(take: $take, skip: $skip, orderBy: $userVehicleBidsOrderBy2) {
+        amount
+      }
+      totalBids
+      quoteIncreament
+      watchedBy {
+        id
+      }
+    }
+    bidLock
+  }
+}
+    `;
